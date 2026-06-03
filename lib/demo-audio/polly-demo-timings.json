@@ -1,0 +1,601 @@
+{
+  "generatedAt": "2026-06-03T08:11:39.198Z",
+  "provider": "Amazon Polly",
+  "region": "us-east-1",
+  "outputUrl": "/demo-audio/auto-bi-7842-recorded-statement.wav",
+  "sampleRate": 16000,
+  "format": "wav",
+  "voices": {
+    "Adjuster": "Matthew",
+    "Claimant": "Joanna"
+  },
+  "durationSeconds": 254.94,
+  "requestedCharacters": 4007,
+  "lines": [
+    {
+      "id": "ts-001",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Adjuster",
+      "text": "This is Daniel Price with North Harbor Mutual. Today is May sixteenth, twenty twenty-six. This is a recorded statement for claim A U T O B I seven eight four two. I am speaking with Maria Santos. Maria, do I have your permission to record this statement?",
+      "startTimeSeconds": 0,
+      "endTimeSeconds": 15.74,
+      "confidence": 0.98
+    },
+    {
+      "id": "ts-002",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Claimant",
+      "text": "Yes, that is fine.",
+      "startTimeSeconds": 16,
+      "endTimeSeconds": 17.54,
+      "confidence": 0.93
+    },
+    {
+      "id": "ts-003",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Adjuster",
+      "text": "Please confirm your full name and mailing city for the record.",
+      "startTimeSeconds": 17.9,
+      "endTimeSeconds": 20.76,
+      "confidence": 0.98
+    },
+    {
+      "id": "ts-004",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Claimant",
+      "text": "My name is Maria Santos. My mailing city is Tampa, Florida.",
+      "startTimeSeconds": 21.02,
+      "endTimeSeconds": 25.59,
+      "confidence": 0.93
+    },
+    {
+      "id": "ts-005",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Adjuster",
+      "text": "We are discussing the motor vehicle accident from May fourteenth, twenty twenty-six. Were you driving the gray twenty twenty-one Toyota Corolla?",
+      "startTimeSeconds": 25.95,
+      "endTimeSeconds": 33.45,
+      "confidence": 0.98
+    },
+    {
+      "id": "ts-006",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Claimant",
+      "text": "Yes, I was driving the Corolla.",
+      "startTimeSeconds": 33.71,
+      "endTimeSeconds": 36.01,
+      "confidence": 0.93
+    },
+    {
+      "id": "ts-007",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Adjuster",
+      "text": "Where were you coming from and where were you headed?",
+      "startTimeSeconds": 36.37,
+      "endTimeSeconds": 38.36,
+      "confidence": 0.98
+    },
+    {
+      "id": "ts-008",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Claimant",
+      "text": "I left my apartment and was going to pick up office supplies before going to work.",
+      "startTimeSeconds": 38.62,
+      "endTimeSeconds": 43.03,
+      "confidence": 0.93
+    },
+    {
+      "id": "ts-009",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Adjuster",
+      "text": "Were those supplies for your employer?",
+      "startTimeSeconds": 43.39,
+      "endTimeSeconds": 45.13,
+      "confidence": 0.98
+    },
+    {
+      "id": "ts-010",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Claimant",
+      "text": "Yes. My manager asked me to pick up printer toner and receipt paper.",
+      "startTimeSeconds": 45.39,
+      "endTimeSeconds": 50.27,
+      "confidence": 0.93
+    },
+    {
+      "id": "ts-011",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Adjuster",
+      "text": "Was that something you were doing as part of your job duties?",
+      "startTimeSeconds": 50.63,
+      "endTimeSeconds": 53.25,
+      "confidence": 0.98
+    },
+    {
+      "id": "ts-012",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Claimant",
+      "text": "I guess yes. I was doing it because my manager asked.",
+      "startTimeSeconds": 53.51,
+      "endTimeSeconds": 57.55,
+      "confidence": 0.93
+    },
+    {
+      "id": "ts-013",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Adjuster",
+      "text": "Tell me what happened just before the impact.",
+      "startTimeSeconds": 57.91,
+      "endTimeSeconds": 59.96,
+      "confidence": 0.98
+    },
+    {
+      "id": "ts-014",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Claimant",
+      "text": "I was in the middle lane on Fletcher Avenue. Traffic was moving, not stopped. The white S U V came up on my right and hit me.",
+      "startTimeSeconds": 60.22,
+      "endTimeSeconds": 68.66,
+      "confidence": 0.93
+    },
+    {
+      "id": "ts-015",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Adjuster",
+      "text": "Were you changing lanes at the time?",
+      "startTimeSeconds": 69.02,
+      "endTimeSeconds": 70.74,
+      "confidence": 0.98
+    },
+    {
+      "id": "ts-016",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Claimant",
+      "text": "No, I was not changing lanes. I was in my lane.",
+      "startTimeSeconds": 71,
+      "endTimeSeconds": 74.9,
+      "confidence": 0.93
+    },
+    {
+      "id": "ts-017",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Adjuster",
+      "text": "Had you started to move toward the right lane?",
+      "startTimeSeconds": 75.26,
+      "endTimeSeconds": 77.33,
+      "confidence": 0.98
+    },
+    {
+      "id": "ts-018",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Claimant",
+      "text": "I mean, I had checked my mirror and I was thinking about moving right, but I was still mostly in the middle lane.",
+      "startTimeSeconds": 77.59,
+      "endTimeSeconds": 83.52,
+      "confidence": 0.93
+    },
+    {
+      "id": "ts-019",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Adjuster",
+      "text": "Did you activate your turn signal?",
+      "startTimeSeconds": 83.88,
+      "endTimeSeconds": 85.52,
+      "confidence": 0.98
+    },
+    {
+      "id": "ts-020",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Claimant",
+      "text": "I believe I did. I always use my signal.",
+      "startTimeSeconds": 85.78,
+      "endTimeSeconds": 89.1,
+      "confidence": 0.93
+    },
+    {
+      "id": "ts-021",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Adjuster",
+      "text": "Are you certain the signal was on?",
+      "startTimeSeconds": 89.46,
+      "endTimeSeconds": 91.13,
+      "confidence": 0.98
+    },
+    {
+      "id": "ts-022",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Claimant",
+      "text": "I cannot say one hundred percent. It happened fast, but I usually signal.",
+      "startTimeSeconds": 91.39,
+      "endTimeSeconds": 96.48,
+      "confidence": 0.93
+    },
+    {
+      "id": "ts-023",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Adjuster",
+      "text": "Were you looking straight ahead when you checked the lane?",
+      "startTimeSeconds": 96.84,
+      "endTimeSeconds": 99.03,
+      "confidence": 0.98
+    },
+    {
+      "id": "ts-024",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Claimant",
+      "text": "Mostly, yes. My phone buzzed in the cup holder, and I glanced down for maybe a second, but I was not texting.",
+      "startTimeSeconds": 99.29,
+      "endTimeSeconds": 106.96,
+      "confidence": 0.93
+    },
+    {
+      "id": "ts-025",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Adjuster",
+      "text": "About how fast were you traveling?",
+      "startTimeSeconds": 107.32,
+      "endTimeSeconds": 108.98,
+      "confidence": 0.98
+    },
+    {
+      "id": "ts-026",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Claimant",
+      "text": "Around thirty-five miles per hour.",
+      "startTimeSeconds": 109.24,
+      "endTimeSeconds": 111.28,
+      "confidence": 0.93
+    },
+    {
+      "id": "ts-027",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Adjuster",
+      "text": "Is that an estimate?",
+      "startTimeSeconds": 111.64,
+      "endTimeSeconds": 112.58,
+      "confidence": 0.98
+    },
+    {
+      "id": "ts-028",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Claimant",
+      "text": "Yes. It might have been forty, maybe closer to forty-five. I do not remember exactly.",
+      "startTimeSeconds": 112.84,
+      "endTimeSeconds": 119.44,
+      "confidence": 0.93
+    },
+    {
+      "id": "ts-029",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Adjuster",
+      "text": "What part of your vehicle was struck?",
+      "startTimeSeconds": 119.8,
+      "endTimeSeconds": 121.49,
+      "confidence": 0.98
+    },
+    {
+      "id": "ts-030",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Claimant",
+      "text": "The front passenger door and the right front fender.",
+      "startTimeSeconds": 121.75,
+      "endTimeSeconds": 124.64,
+      "confidence": 0.93
+    },
+    {
+      "id": "ts-031",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Adjuster",
+      "text": "Was your vehicle drivable after the accident?",
+      "startTimeSeconds": 125,
+      "endTimeSeconds": 127.26,
+      "confidence": 0.98
+    },
+    {
+      "id": "ts-032",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Claimant",
+      "text": "Yes, I drove it home. The passenger door made a scraping sound, but it still opened.",
+      "startTimeSeconds": 127.52,
+      "endTimeSeconds": 133.34,
+      "confidence": 0.93
+    },
+    {
+      "id": "ts-033",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Adjuster",
+      "text": "Did airbags deploy?",
+      "startTimeSeconds": 133.7,
+      "endTimeSeconds": 134.99,
+      "confidence": 0.98
+    },
+    {
+      "id": "ts-034",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Claimant",
+      "text": "No, no airbags deployed.",
+      "startTimeSeconds": 135.25,
+      "endTimeSeconds": 137.41,
+      "confidence": 0.93
+    },
+    {
+      "id": "ts-035",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Adjuster",
+      "text": "Did police come to the scene?",
+      "startTimeSeconds": 137.77,
+      "endTimeSeconds": 139.24,
+      "confidence": 0.98
+    },
+    {
+      "id": "ts-036",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Claimant",
+      "text": "No. We moved into a gas station parking lot and exchanged information.",
+      "startTimeSeconds": 139.5,
+      "endTimeSeconds": 144.58,
+      "confidence": 0.93
+    },
+    {
+      "id": "ts-037",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Adjuster",
+      "text": "Were there any witnesses?",
+      "startTimeSeconds": 144.94,
+      "endTimeSeconds": 146.14,
+      "confidence": 0.98
+    },
+    {
+      "id": "ts-038",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Claimant",
+      "text": "There was a man at the gas station who said he saw it, but I did not get his full name. I think his first name was Kevin.",
+      "startTimeSeconds": 146.4,
+      "endTimeSeconds": 153.31,
+      "confidence": 0.93
+    },
+    {
+      "id": "ts-039",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Adjuster",
+      "text": "Did you get Kevin's phone number?",
+      "startTimeSeconds": 153.67,
+      "endTimeSeconds": 155.13,
+      "confidence": 0.98
+    },
+    {
+      "id": "ts-040",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Claimant",
+      "text": "No, I forgot to ask before he left.",
+      "startTimeSeconds": 155.39,
+      "endTimeSeconds": 158.03,
+      "confidence": 0.93
+    },
+    {
+      "id": "ts-041",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Adjuster",
+      "text": "Did you take photos at the scene?",
+      "startTimeSeconds": 158.39,
+      "endTimeSeconds": 160,
+      "confidence": 0.98
+    },
+    {
+      "id": "ts-042",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Claimant",
+      "text": "Yes, I took photos of the cars in the parking lot and then more photos when I got home.",
+      "startTimeSeconds": 160.26,
+      "endTimeSeconds": 165.27,
+      "confidence": 0.93
+    },
+    {
+      "id": "ts-043",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Adjuster",
+      "text": "Did you feel injured at the scene?",
+      "startTimeSeconds": 165.63,
+      "endTimeSeconds": 167.18,
+      "confidence": 0.98
+    },
+    {
+      "id": "ts-044",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Claimant",
+      "text": "At the scene I was shaken up, but I told the other driver I was okay.",
+      "startTimeSeconds": 167.44,
+      "endTimeSeconds": 171.44,
+      "confidence": 0.93
+    },
+    {
+      "id": "ts-045",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Adjuster",
+      "text": "When did you first feel pain?",
+      "startTimeSeconds": 171.8,
+      "endTimeSeconds": 173.33,
+      "confidence": 0.98
+    },
+    {
+      "id": "ts-046",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Claimant",
+      "text": "My neck felt tight later that evening. My lower back started hurting two days later.",
+      "startTimeSeconds": 173.59,
+      "endTimeSeconds": 178.92,
+      "confidence": 0.93
+    },
+    {
+      "id": "ts-047",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Adjuster",
+      "text": "Earlier in your claim report, you said you felt back pain right away. Do you remember saying that?",
+      "startTimeSeconds": 179.28,
+      "endTimeSeconds": 184.71,
+      "confidence": 0.98
+    },
+    {
+      "id": "ts-048",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Claimant",
+      "text": "I might have said I felt pain after the accident. I do not remember saying it was right away.",
+      "startTimeSeconds": 184.97,
+      "endTimeSeconds": 190.62,
+      "confidence": 0.93
+    },
+    {
+      "id": "ts-049",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Adjuster",
+      "text": "Did you seek treatment on May fourteenth?",
+      "startTimeSeconds": 190.98,
+      "endTimeSeconds": 192.88,
+      "confidence": 0.98
+    },
+    {
+      "id": "ts-050",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Claimant",
+      "text": "No. I went to urgent care on May eighteenth because the back pain was not going away.",
+      "startTimeSeconds": 193.14,
+      "endTimeSeconds": 198.65,
+      "confidence": 0.93
+    },
+    {
+      "id": "ts-051",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Adjuster",
+      "text": "Did you receive any treatment before urgent care?",
+      "startTimeSeconds": 199.01,
+      "endTimeSeconds": 201.37,
+      "confidence": 0.98
+    },
+    {
+      "id": "ts-052",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Claimant",
+      "text": "Just ice, ibuprofen, and rest.",
+      "startTimeSeconds": 201.63,
+      "endTimeSeconds": 204.15,
+      "confidence": 0.93
+    },
+    {
+      "id": "ts-053",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Adjuster",
+      "text": "Have you ever had lower back problems before this accident?",
+      "startTimeSeconds": 204.51,
+      "endTimeSeconds": 207.28,
+      "confidence": 0.98
+    },
+    {
+      "id": "ts-054",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Claimant",
+      "text": "I had a lower back strain about three years ago from moving furniture, but it got better after physical therapy.",
+      "startTimeSeconds": 207.54,
+      "endTimeSeconds": 213.74,
+      "confidence": 0.93
+    },
+    {
+      "id": "ts-055",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Adjuster",
+      "text": "Any treatment for your back in the last year before this accident?",
+      "startTimeSeconds": 214.1,
+      "endTimeSeconds": 217.11,
+      "confidence": 0.98
+    },
+    {
+      "id": "ts-056",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Claimant",
+      "text": "No treatment in the last year.",
+      "startTimeSeconds": 217.37,
+      "endTimeSeconds": 219.32,
+      "confidence": 0.93
+    },
+    {
+      "id": "ts-057",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Adjuster",
+      "text": "Did urgent care refer you anywhere?",
+      "startTimeSeconds": 219.68,
+      "endTimeSeconds": 221.58,
+      "confidence": 0.98
+    },
+    {
+      "id": "ts-058",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Claimant",
+      "text": "They told me to follow up with my primary doctor and maybe physical therapy if it did not improve.",
+      "startTimeSeconds": 221.84,
+      "endTimeSeconds": 227.27,
+      "confidence": 0.93
+    },
+    {
+      "id": "ts-059",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Adjuster",
+      "text": "Did you miss work?",
+      "startTimeSeconds": 227.63,
+      "endTimeSeconds": 228.54,
+      "confidence": 0.98
+    },
+    {
+      "id": "ts-060",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Claimant",
+      "text": "I missed one full day and worked from home for two days.",
+      "startTimeSeconds": 228.8,
+      "endTimeSeconds": 232.18,
+      "confidence": 0.93
+    },
+    {
+      "id": "ts-061",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Adjuster",
+      "text": "Do you have a repair estimate?",
+      "startTimeSeconds": 232.54,
+      "endTimeSeconds": 233.85,
+      "confidence": 0.98
+    },
+    {
+      "id": "ts-062",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Claimant",
+      "text": "Not yet. The body shop said they could inspect it next week.",
+      "startTimeSeconds": 234.11,
+      "endTimeSeconds": 238.06,
+      "confidence": 0.93
+    },
+    {
+      "id": "ts-063",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Adjuster",
+      "text": "Is there anything else we should know?",
+      "startTimeSeconds": 238.42,
+      "endTimeSeconds": 239.96,
+      "confidence": 0.98
+    },
+    {
+      "id": "ts-064",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Claimant",
+      "text": "I still think the S U V was speeding, but I cannot say exactly how fast. I was trying to get over and then everything happened quickly.",
+      "startTimeSeconds": 240.22,
+      "endTimeSeconds": 248.24,
+      "confidence": 0.93
+    },
+    {
+      "id": "ts-065",
+      "audioAssetId": "audio-7842-statement",
+      "speaker": "Adjuster",
+      "text": "Thank you. This concludes the recorded statement at three forty-two P M on May sixteenth, twenty twenty-six.",
+      "startTimeSeconds": 248.6,
+      "endTimeSeconds": 254.68,
+      "confidence": 0.98
+    }
+  ]
+}

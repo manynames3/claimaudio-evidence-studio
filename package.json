@@ -13,6 +13,7 @@
     "cf:deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "db:migrate": "tsx -r tsconfig-paths/register scripts/apply-neon-migration.ts",
     "db:seed": "tsx -r tsconfig-paths/register scripts/seed-neon-demo-data.ts",
+    "demo:polly": "tsx scripts/generate-polly-demo-audio.ts",
     "test:guardrails": "tsx -r tsconfig-paths/register scripts/validate-ai-guardrails.ts",
     "test": "npm run typecheck && npm run test:guardrails"
   },

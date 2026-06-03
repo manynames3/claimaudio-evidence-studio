@@ -9,7 +9,7 @@ ClaimAudio Evidence Studio is a SaaS product demo for reviewing insurance record
 - Tailwind CSS
 - shadcn/ui-style local components
 - Zustand local state
-- Local mock claim, transcript, evidence, contradiction, clip, and export data for the sample-statement demo path
+- Preloaded Amazon Polly sample recorded statement audio with local mock transcript, evidence, contradiction, clip, and export data
 - Neon Postgres for paid-pilot persistence
 - AWS SDK server-only adapters for S3 signed uploads, Amazon Transcribe, Amazon Bedrock, SQS, Step Functions, and encrypted exports
 - Pilot access-code auth with signed HTTP-only sessions, code-assigned roles, role-aware UI, tenant-scoped API calls, and TODO hooks for Cognito/Auth0
@@ -33,7 +33,7 @@ Set `CLAIMAUDIO_PILOT_ACCESS_CODE`, `CLAIMAUDIO_SUPERVISOR_ACCESS_CODE`, and `CL
 
 ## MVP Notes
 
-The sample-statement demo path still uses mock audio, transcript, evidence findings, contradictions, exports, and a generated waveform. When AWS is configured, the uploaded-audio path is backend-connected for low-volume pilot use:
+The sample-statement demo path uses a synthetic Amazon Polly recorded statement at `public/demo-audio/auto-bi-7842-recorded-statement.wav`. Transcript, evidence findings, contradictions, exports, and clips remain local mock data, but their timestamps are aligned to the generated audio through `lib/demo-audio/polly-demo-timings.json`. When AWS is configured, the uploaded-audio path is backend-connected for low-volume pilot use:
 
 - creates a persisted claim project in Neon
 - returns a signed S3 upload URL
@@ -73,6 +73,22 @@ npm run db:seed
 ```bash
 npm run dev
 ```
+
+## Polly Demo Audio
+
+The flagship sample claim uses a two-speaker Amazon Polly conversation:
+
+- Adjuster voice: Matthew
+- Claimant voice: Joanna
+- Scenario: auto BI recorded statement with lane-change uncertainty, work-errand coverage facts, delayed treatment, prior lower-back condition, missing witness contact info, and contradiction-ready speed/lane/pain chronology.
+
+Regenerate the demo audio and timing JSON with:
+
+```bash
+npm run demo:polly
+```
+
+This command calls AWS Polly using your local AWS credentials, stitches raw PCM responses into a browser-playable WAV, and writes the timing file used by the transcript and evidence markers. The generated file is synthetic and non-confidential; do not use real claim facts in this script.
 
 The Neon schema lives in `db/migrations` and includes:
 
@@ -225,7 +241,7 @@ Service abstractions live in `lib/services`:
 - `clip-service.ts`
 - `audit-log-service.ts`
 
-The sample-statement project flow simulates upload, transcription, analysis, and ready-for-review states locally. No AWS keys or environment variables are required for mock/demo mode.
+The sample-statement project flow simulates upload, transcription, analysis, and ready-for-review states locally. The preloaded sample recording is committed under `public/demo-audio`, so no AWS keys or environment variables are required to run the app after the audio has been generated.
 
 Server-only AWS production adapter scaffolds live in `lib/services/aws`:
 

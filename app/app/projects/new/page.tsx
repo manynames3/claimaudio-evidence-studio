@@ -53,7 +53,7 @@ export default function NewProjectPage() {
     const project = await startMockProjectProcessing(
       projectInput(),
       sourceType,
-      sourceType === "sample" ? "sample_auto_bi_recorded_statement.wav" : "fake_uploaded_recorded_statement.wav"
+      sourceType === "sample" ? "Santos_recorded_statement_polly_demo.wav" : "fake_uploaded_recorded_statement.wav"
     );
 
     setProcessingProjectId(project.id);

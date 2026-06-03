@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pause, Play, Scissors, StepBack, StepForward } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,11 @@ export function WaveformPlayer({
   onCreateClip
 }: WaveformPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioSrc =
+    audioAsset.storageUrl?.startsWith("/") || audioAsset.storageUrl?.startsWith("https://")
+      ? audioAsset.storageUrl
+      : undefined;
   const bars = useMemo(
     () =>
       Array.from({ length: 96 }, (_, index) => {
@@ -40,8 +45,31 @@ export function WaveformPlayer({
       }),
     []
   );
+  const togglePlayback = useCallback(() => {
+    const audio = audioRef.current;
+
+    if (!audio || !audioSrc) {
+      setIsPlaying((playing) => !playing);
+      return;
+    }
+
+    if (isPlaying) {
+      audio.pause();
+      setIsPlaying(false);
+      return;
+    }
+
+    void audio
+      .play()
+      .then(() => setIsPlaying(true))
+      .catch(() => setIsPlaying(false));
+  }, [audioSrc, isPlaying]);
 
   useEffect(() => {
+    if (audioSrc) {
+      return;
+    }
+
     if (!isPlaying) {
       return;
     }
@@ -57,7 +85,43 @@ export function WaveformPlayer({
     }, 1000);
 
     return () => window.clearInterval(timer);
-  }, [audioAsset.durationSeconds, currentTimeSeconds, isPlaying, onTimeChange]);
+  }, [audioAsset.durationSeconds, audioSrc, currentTimeSeconds, isPlaying, onTimeChange]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+
+    if (!audio || !audioSrc) {
+      return;
+    }
+
+    const handleTimeUpdate = () => {
+      onTimeChange(audio.currentTime);
+    };
+    const handleEnded = () => {
+      setIsPlaying(false);
+      onTimeChange(audio.duration || audioAsset.durationSeconds);
+    };
+
+    audio.addEventListener("timeupdate", handleTimeUpdate);
+    audio.addEventListener("ended", handleEnded);
+
+    return () => {
+      audio.removeEventListener("timeupdate", handleTimeUpdate);
+      audio.removeEventListener("ended", handleEnded);
+    };
+  }, [audioAsset.durationSeconds, audioSrc, onTimeChange]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+
+    if (!audio || !audioSrc) {
+      return;
+    }
+
+    if (Math.abs(audio.currentTime - currentTimeSeconds) > 0.4) {
+      audio.currentTime = Math.min(audio.duration || audioAsset.durationSeconds, Math.max(0, currentTimeSeconds));
+    }
+  }, [audioAsset.durationSeconds, audioSrc, currentTimeSeconds]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -70,7 +134,7 @@ export function WaveformPlayer({
 
       if (event.code === "Space") {
         event.preventDefault();
-        setIsPlaying((playing) => !playing);
+        togglePlayback();
       }
 
       if (event.key.toLowerCase() === "j") {
@@ -89,7 +153,7 @@ export function WaveformPlayer({
     window.addEventListener("keydown", handleKeyDown);
 
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [audioAsset.durationSeconds, currentTimeSeconds, onCreateClip, onTimeChange]);
+  }, [audioAsset.durationSeconds, currentTimeSeconds, onCreateClip, onTimeChange, togglePlayback]);
 
   const progressPercent = secondsToPercent(currentTimeSeconds, audioAsset.durationSeconds);
   const rangeLeft = secondsToPercent(selectedRange.startTimeSeconds, audioAsset.durationSeconds);
@@ -101,12 +165,27 @@ export function WaveformPlayer({
   // TODO: Replace this mock waveform adapter with WaveSurfer.js or a real waveform service once S3 audio is available.
   return (
     <section className="rounded-lg border bg-white">
+      {audioSrc ? (
+        <audio
+          ref={audioRef}
+          src={audioSrc}
+          preload="metadata"
+          onLoadedMetadata={(event) => {
+            const audio = event.currentTarget;
+
+            if (Math.abs(audio.currentTime - currentTimeSeconds) > 0.4) {
+              audio.currentTime = Math.min(audio.duration || audioAsset.durationSeconds, currentTimeSeconds);
+            }
+          }}
+        />
+      ) : null}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4">
         <div>
           <h2 className="text-sm font-semibold">Recorded Statement Player</h2>
           <p className="mt-1 text-xs text-muted-foreground">{audioAsset.fileName}</p>
         </div>
         <div className="flex items-center gap-2">
+          {audioSrc ? <Badge variant="info">Preloaded audio</Badge> : null}
           <Badge variant="success">Ready for review</Badge>
           <Timecode start={currentTimeSeconds} />
           <span className="text-xs text-muted-foreground">/ {formatTimecode(audioAsset.durationSeconds)}</span>
@@ -181,7 +260,7 @@ export function WaveformPlayer({
             >
               <StepBack className="h-4 w-4" />
             </Button>
-            <Button size="icon" title={isPlaying ? "Pause" : "Play"} onClick={() => setIsPlaying(!isPlaying)}>
+            <Button size="icon" title={isPlaying ? "Pause" : "Play"} onClick={togglePlayback}>
               {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
             </Button>
             <Button

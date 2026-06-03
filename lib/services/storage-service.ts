@@ -1,4 +1,5 @@
 import type { AudioAsset } from "@/lib/types";
+import { sampleStatementAudioDurationSeconds, sampleStatementAudioUrl } from "@/lib/demo-audio/sample-statement";
 
 export interface SignedUploadUrlRequest {
   claimProjectId: string;
@@ -36,6 +37,19 @@ export const mockStorageService: StorageService = {
     };
   },
   async createMockAudioAsset(input) {
+    if (input.sourceType === "sample") {
+      return {
+        id: input.id,
+        claimProjectId: input.claimProjectId,
+        fileName: input.fileName,
+        durationSeconds: input.durationSeconds || sampleStatementAudioDurationSeconds,
+        sourceType: input.sourceType,
+        processingStatus: "uploaded",
+        storageUrl: sampleStatementAudioUrl,
+        createdAt: new Date().toISOString()
+      };
+    }
+
     const signedUrl = await this.createSignedUploadUrl({
       claimProjectId: input.claimProjectId,
       fileName: input.fileName,

@@ -4,6 +4,12 @@ Synthetic, non-confidential recorded statement scripts for ClaimAudio Evidence S
 
 Use these to generate audio with Amazon Polly, macOS `say`, ElevenLabs, Descript, or voice actors. Do not use real claim numbers, real claimant names, or confidential claim facts.
 
+The deployed ClaimAudio demo now uses the Polly-generated sample at `public/demo-audio/auto-bi-7842-recorded-statement.wav`. Regenerate it with:
+
+```bash
+npm run demo:polly
+```
+
 ## Recommended Demo Order
 
 1. `01_claimant_lane_change_auto_bi.txt`
