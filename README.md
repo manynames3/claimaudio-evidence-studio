@@ -22,6 +22,7 @@ npm run dev
 ```
 
 Open [http://localhost:3000/app](http://localhost:3000/app). You will be redirected to `/login`.
+The demo login form starts an adjuster session using the server-configured pilot code; the code is not shown in the UI.
 
 Local default pilot access code:
 
@@ -29,7 +30,7 @@ Local default pilot access code:
 demo-pilot
 ```
 
-Set `CLAIMAUDIO_PILOT_ACCESS_CODE`, `CLAIMAUDIO_SUPERVISOR_ACCESS_CODE`, and `CLAIMAUDIO_SESSION_SECRET` before any external pilot. Users do not choose their own role; the access code assigns it.
+Set `CLAIMAUDIO_PILOT_ACCESS_CODE`, `CLAIMAUDIO_SUPERVISOR_ACCESS_CODE`, and `CLAIMAUDIO_SESSION_SECRET` before any external pilot. Users do not choose their own role; the server-side access code assigns it.
 
 ## MVP Notes
 

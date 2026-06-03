@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   createPilotSession,
+  DEFAULT_PILOT_ACCESS_CODE,
   getRequestAuthContext,
   getSessionCookieOptions,
   PILOT_SESSION_COOKIE,
@@ -11,7 +12,7 @@ import { jsonError, jsonOk } from "@/lib/server/api";
 type LoginRequest = {
   email: string;
   displayName?: string;
-  accessCode: string;
+  accessCode?: string;
 };
 
 export async function GET(request: NextRequest) {
@@ -34,7 +35,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const body = (await request.json()) as LoginRequest;
-  const role = resolvePilotAccessCode(body.accessCode || "");
+  const accessCode = body.accessCode?.trim() || process.env.CLAIMAUDIO_PILOT_ACCESS_CODE || DEFAULT_PILOT_ACCESS_CODE;
+  const role = resolvePilotAccessCode(accessCode);
 
   if (!role) {
     return jsonError("Invalid pilot access code.", 401);
