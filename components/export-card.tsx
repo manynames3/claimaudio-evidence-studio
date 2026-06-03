@@ -18,7 +18,15 @@ type GeneratedExportCardOutput = Partial<{
   fileName: string;
   format: "Text" | "JSON" | "HTML";
   exportMemoId: string;
+  storageKey: string;
+  downloadUrl: string;
+  expiresAt: string;
 }>;
+
+type ExportDownloadResult = {
+  downloadUrl?: string;
+  expiresAt?: string;
+};
 
 interface ExportCardProps {
   title: string;
@@ -28,13 +36,17 @@ interface ExportCardProps {
   fileName: string;
   disabled?: boolean;
   gateMessage?: string;
+  testId?: string;
   onGenerate?: () => Promise<GeneratedExportCardOutput | void> | GeneratedExportCardOutput | void;
   onDownload?: (generated: {
     fileName: string;
     content: string;
     format: "Text" | "JSON" | "HTML";
     exportMemoId?: string;
-  }) => Promise<void> | void;
+    storageKey?: string;
+    downloadUrl?: string;
+    expiresAt?: string;
+  }) => Promise<ExportDownloadResult | void> | ExportDownloadResult | void;
 }
 
 function downloadMockExport(fileName: string, content: string, format: ExportCardProps["format"]) {
@@ -50,6 +62,15 @@ function downloadMockExport(fileName: string, content: string, format: ExportCar
   URL.revokeObjectURL(url);
 }
 
+function downloadSignedExport(downloadUrl: string, fileName: string) {
+  const anchor = document.createElement("a");
+
+  anchor.href = downloadUrl;
+  anchor.download = fileName;
+  anchor.rel = "noreferrer";
+  anchor.click();
+}
+
 export function ExportCard({
   title,
   description,
@@ -58,6 +79,7 @@ export function ExportCard({
   fileName,
   disabled,
   gateMessage,
+  testId,
   onGenerate,
   onDownload
 }: ExportCardProps) {
@@ -66,6 +88,9 @@ export function ExportCard({
     fileName: string;
     format: "Text" | "JSON" | "HTML";
     exportMemoId?: string;
+    storageKey?: string;
+    downloadUrl?: string;
+    expiresAt?: string;
   }>({ content, fileName, format });
   const [hasGenerated, setHasGenerated] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -94,7 +119,10 @@ export function ExportCard({
             content: next.content || generated.content,
             fileName: next.fileName || generated.fileName,
             format: next.format || generated.format,
-            exportMemoId: next.exportMemoId || generated.exportMemoId
+            exportMemoId: next.exportMemoId || generated.exportMemoId,
+            storageKey: next.storageKey || generated.storageKey,
+            downloadUrl: next.downloadUrl || generated.downloadUrl,
+            expiresAt: next.expiresAt || generated.expiresAt
           }
         : generated;
 
@@ -113,12 +141,19 @@ export function ExportCard({
 
   const handleDownload = async () => {
     const next = await runGenerate();
-    await onDownload?.(next);
+    const downloadResult = await onDownload?.(next);
+    const signedDownloadUrl = downloadResult?.downloadUrl || next.downloadUrl;
+
+    if (signedDownloadUrl) {
+      downloadSignedExport(signedDownloadUrl, next.fileName);
+      return;
+    }
+
     downloadMockExport(next.fileName, next.content, next.format);
   };
 
   return (
-    <article className="rounded-lg border bg-white p-5 shadow-panel">
+    <article className="rounded-lg border bg-white p-5 shadow-panel" data-testid={testId}>
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="text-base font-semibold">{title}</h3>

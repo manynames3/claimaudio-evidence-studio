@@ -53,6 +53,8 @@ interface AwsTranscribeOutput {
   };
 }
 
+type AwsTranscribeItem = NonNullable<NonNullable<AwsTranscribeOutput["results"]>["items"]>[number];
+
 export class AwsTranscriptionService {
   private readonly transcribeClient: TranscribeClient;
   private readonly s3Client: S3Client;
@@ -193,7 +195,7 @@ function normalizeTranscribeOutput(audioAssetId: string, output: AwsTranscribeOu
         const itemStart = Number(item.start_time);
         return itemStart >= start && itemStart <= end + 0.05;
       });
-      const text = words.map((word) => word.alternatives?.[0]?.content || "").filter(Boolean).join(" ");
+      const text = buildTranscriptText(itemsForRange(items, start, end));
       const averageConfidence = words.length
         ? words.reduce((sum, word) => sum + Number(word.alternatives?.[0]?.confidence || 0), 0) / words.length
         : 0.8;
@@ -212,6 +214,10 @@ function normalizeTranscribeOutput(audioAssetId: string, output: AwsTranscribeOu
 
   const transcript = output.results?.transcripts?.[0]?.transcript || "";
 
+  if (items.length > 0) {
+    return groupItemsIntoSegments(audioAssetId, items);
+  }
+
   return [
     {
       id: `${audioAssetId}-real-seg-001`,
@@ -225,12 +231,122 @@ function normalizeTranscribeOutput(audioAssetId: string, output: AwsTranscribeOu
   ];
 }
 
+function itemsForRange(items: AwsTranscribeItem[], start: number, end: number) {
+  const selected: AwsTranscribeItem[] = [];
+  let lastPronunciationWasSelected = false;
+
+  for (const item of items) {
+    if (item.type === "pronunciation" && item.start_time) {
+      const itemStart = Number(item.start_time);
+      lastPronunciationWasSelected = itemStart >= start && itemStart <= end + 0.05;
+
+      if (lastPronunciationWasSelected) {
+        selected.push(item);
+      }
+
+      continue;
+    }
+
+    if (item.type === "punctuation" && lastPronunciationWasSelected) {
+      selected.push(item);
+    }
+  }
+
+  return selected;
+}
+
+function buildTranscriptText(items: AwsTranscribeItem[]) {
+  return items.reduce((text, item) => {
+    const content = item.alternatives?.[0]?.content || "";
+
+    if (!content) {
+      return text;
+    }
+
+    if (item.type === "punctuation") {
+      return `${text}${content}`;
+    }
+
+    return text ? `${text} ${content}` : content;
+  }, "");
+}
+
+function groupItemsIntoSegments(
+  audioAssetId: string,
+  items: AwsTranscribeItem[]
+): TranscriptSegment[] {
+  const segments: TranscriptSegment[] = [];
+  let currentItems: AwsTranscribeItem[] = [];
+  let currentStart = 0;
+  let currentEnd = 0;
+  let lastEnd = 0;
+  let index = 0;
+  let currentSpeakerLabel: string | undefined;
+
+  const flush = () => {
+    const pronunciations = currentItems.filter((item) => item.type === "pronunciation");
+
+    if (pronunciations.length === 0) {
+      currentItems = [];
+      return;
+    }
+
+    const averageConfidence =
+      pronunciations.reduce((sum, item) => sum + Number(item.alternatives?.[0]?.confidence || 0), 0) /
+      pronunciations.length;
+    index += 1;
+    segments.push({
+      id: `${audioAssetId}-real-seg-${String(index).padStart(3, "0")}`,
+      audioAssetId,
+      speaker: mapSpeakerLabel(currentSpeakerLabel, index),
+      text: buildTranscriptText(currentItems),
+      startTimeSeconds: currentStart,
+      endTimeSeconds: currentEnd,
+      confidence: Number.isFinite(averageConfidence) ? Math.min(1, Math.max(0, averageConfidence)) : 0.8
+    });
+    currentItems = [];
+    currentSpeakerLabel = undefined;
+  };
+
+  for (const item of items) {
+    if (item.type === "pronunciation" && item.start_time) {
+      const start = Number(item.start_time);
+      const end = Number(item.end_time || item.start_time);
+      const shouldStartNewSegment =
+        currentItems.length === 0 || start - lastEnd > 1.2 || currentEnd - currentStart > 18;
+
+      if (shouldStartNewSegment && currentItems.length > 0) {
+        flush();
+      }
+
+      if (currentItems.length === 0) {
+        currentStart = start;
+        currentSpeakerLabel = item.speaker_label;
+      }
+
+      currentEnd = end;
+      lastEnd = end;
+      currentItems.push(item);
+      continue;
+    }
+
+    if (item.type === "punctuation" && currentItems.length > 0) {
+      currentItems.push(item);
+    }
+  }
+
+  flush();
+
+  return segments;
+}
+
 function isTranscriptionJobConflict(error: unknown) {
   return error instanceof Error && error.name === "ConflictException";
 }
 
 function mapSpeakerLabel(label: string | undefined, fallbackIndex: number): TranscriptSegment["speaker"] {
-  const speakerIndex = Number(label?.replace(/\D/g, ""));
+  const digits = label?.match(/\d+/)?.[0];
+  const speakerIndex = digits ? Number(digits) : Number.NaN;
 
   if (Number.isFinite(speakerIndex)) {
     if (speakerIndex === 0) return "Adjuster";

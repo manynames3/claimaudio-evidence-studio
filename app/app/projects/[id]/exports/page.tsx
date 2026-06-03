@@ -48,6 +48,9 @@ export default function ExportCenterPage({ params }: { params: Promise<{ id: str
   const reviewedFindings = projectFindings.filter(
     (finding) => finding.reviewStatus === "approved" || finding.reviewStatus === "edited"
   );
+  const reviewedContradictions = projectContradictions.filter(
+    (contradiction) => contradiction.reviewStatus === "approved" || contradiction.reviewStatus === "edited"
+  );
 
   const exportTypes: ExportMemo["exportType"][] = [
     "statementSummary",
@@ -64,7 +67,8 @@ export default function ExportCenterPage({ params }: { params: Promise<{ id: str
           ? reviewedFindings
           : projectFindings,
       transcriptSegments: projectSegments,
-      contradictions: projectContradictions,
+      contradictions:
+        exportType === "contradictionReport" ? reviewedContradictions : projectContradictions,
       clips: projectClips,
       exportType
     })
@@ -119,11 +123,17 @@ export default function ExportCenterPage({ params }: { params: Promise<{ id: str
             <ExportCard
               key={card.title}
               {...card}
+              testId={`export-card-${card.exportType}`}
               disabled={
-                ["statementSummary", "timestampedEvidenceMemo"].includes(card.exportType) &&
-                reviewedFindings.length === 0
+                (["statementSummary", "timestampedEvidenceMemo"].includes(card.exportType) &&
+                  reviewedFindings.length === 0) ||
+                (card.exportType === "contradictionReport" && reviewedContradictions.length === 0)
               }
-              gateMessage="Approve or edit at least one finding before generating this claim-file export."
+              gateMessage={
+                card.exportType === "contradictionReport"
+                  ? "Approve at least one contradiction before generating this report."
+                  : "Approve or edit at least one finding before generating this claim-file export."
+              }
               onGenerate={async () => {
                 if (backendMode === "neon") {
                   const { generatedExport, exportMemo } = await backendApi.generateExport(project.id, card.exportType);
@@ -141,12 +151,14 @@ export default function ExportCenterPage({ params }: { params: Promise<{ id: str
               }}
               onDownload={async (generated) => {
                 if (backendMode === "neon" && generated.exportMemoId) {
-                  await backendApi.recordExportDownload(project.id, {
+                  const downloadResult = await backendApi.recordExportDownload(project.id, {
                     exportMemoId: generated.exportMemoId,
                     fileName: generated.fileName,
                     exportType: card.exportType
                   });
                   await loadProjectBundle(project.id);
+
+                  return downloadResult;
                 }
               }}
             />

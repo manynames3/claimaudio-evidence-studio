@@ -58,6 +58,7 @@ export interface ClaimAudioRepository {
   saveTranscriptSegments(segments: TranscriptSegment[]): Promise<void>;
   saveAnalysisResult(input: SaveAnalysisResultInput): Promise<void>;
   updateFindingReviewStatus(findingId: string, reviewStatus: ReviewStatus): Promise<EvidenceFinding | null>;
+  updateContradictionReviewStatus(contradictionId: string, reviewStatus: ReviewStatus): Promise<Contradiction | null>;
   editFinding(
     findingId: string,
     updates: Pick<EvidenceFinding, "title" | "whyItMatters" | "recommendedFollowUp" | "notes">
@@ -616,6 +617,7 @@ export class NeonClaimAudioRepository implements ClaimAudioRepository {
           included_finding_ids,
           included_contradiction_ids,
           included_clip_ids,
+          s3_export_key,
           created_at
         )
         select
@@ -629,6 +631,7 @@ export class NeonClaimAudioRepository implements ClaimAudioRepository {
           item."includedFindingIds",
           item."includedContradictionIds",
           item."includedClipIds",
+          item."s3ExportKey",
           item."createdAt"
         from jsonb_to_recordset(${JSON.stringify(input.exportMemos)}::jsonb) as item(
           id text,
@@ -640,6 +643,7 @@ export class NeonClaimAudioRepository implements ClaimAudioRepository {
           "includedFindingIds" text[],
           "includedContradictionIds" text[],
           "includedClipIds" text[],
+          "s3ExportKey" text,
           "createdAt" timestamptz
         )
         on conflict (id) do update set
@@ -647,7 +651,8 @@ export class NeonClaimAudioRepository implements ClaimAudioRepository {
           content = excluded.content,
           included_finding_ids = excluded.included_finding_ids,
           included_contradiction_ids = excluded.included_contradiction_ids,
-          included_clip_ids = excluded.included_clip_ids
+          included_clip_ids = excluded.included_clip_ids,
+          s3_export_key = excluded.s3_export_key
       `;
     }
   }
@@ -663,6 +668,19 @@ export class NeonClaimAudioRepository implements ClaimAudioRepository {
     `);
 
     return rows[0] ? mapFindingRow(rows[0]) : null;
+  }
+
+  async updateContradictionReviewStatus(contradictionId: string, reviewStatus: ReviewStatus) {
+    await this.ensureDemoTenant();
+    const sql = getNeonSql();
+    const rows = asRows(await sql`
+      update contradictions
+      set review_status = ${reviewStatus}, updated_at = now()
+      where tenant_id = ${this.tenantId}::uuid and id = ${contradictionId}
+      returning *
+    `);
+
+    return rows[0] ? mapContradictionRow(rows[0]) : null;
   }
 
   async editFinding(
@@ -847,6 +865,7 @@ export class NeonClaimAudioRepository implements ClaimAudioRepository {
         included_finding_ids,
         included_contradiction_ids,
         included_clip_ids,
+        s3_export_key,
         created_at
       )
       values (
@@ -860,6 +879,7 @@ export class NeonClaimAudioRepository implements ClaimAudioRepository {
         ${memo.includedFindingIds},
         ${memo.includedContradictionIds},
         ${memo.includedClipIds},
+        ${memo.s3ExportKey || null},
         ${memo.createdAt}
       )
       on conflict (id) do update set
@@ -867,7 +887,8 @@ export class NeonClaimAudioRepository implements ClaimAudioRepository {
         content = excluded.content,
         included_finding_ids = excluded.included_finding_ids,
         included_contradiction_ids = excluded.included_contradiction_ids,
-        included_clip_ids = excluded.included_clip_ids
+        included_clip_ids = excluded.included_clip_ids,
+        s3_export_key = excluded.s3_export_key
     `;
   }
 }
@@ -989,6 +1010,7 @@ function mapExportMemoRow(row: Record<string, unknown>): ExportMemo {
     includedFindingIds: toStringArray(row.included_finding_ids),
     includedContradictionIds: toStringArray(row.included_contradiction_ids),
     includedClipIds: toStringArray(row.included_clip_ids),
+    s3ExportKey: row.s3_export_key ? String(row.s3_export_key) : undefined,
     createdAt: formatDateTime(row.created_at)
   };
 }

@@ -66,6 +66,11 @@ interface ClaimAudioState {
   selectTranscriptSegment: (segment: TranscriptSegment) => void;
   selectFinding: (finding: EvidenceFinding) => void;
   updateFindingStatus: (projectId: string, findingId: string, reviewStatus: ReviewStatus) => void;
+  updateContradictionStatus: (
+    projectId: string,
+    contradictionId: string,
+    reviewStatus: Extract<ReviewStatus, "approved" | "rejected">
+  ) => void;
   editFinding: (
     projectId: string,
     findingId: string,
@@ -566,7 +571,11 @@ export const useClaimAudioStore = create<ClaimAudioState>((set, get) => {
             await get().loadProjectBundle(projectId);
             return;
           } catch (error) {
-            set({ lastSyncError: error instanceof Error ? error.message : "Unable to persist review action." });
+            set((state) => ({
+              findings: state.findings.map((item) => (item.id === findingId ? finding : item)),
+              lastSyncError: error instanceof Error ? error.message : "Unable to persist review action."
+            }));
+            return;
           }
         }
 
@@ -582,6 +591,67 @@ export const useClaimAudioStore = create<ClaimAudioState>((set, get) => {
             newStatus: reviewStatus,
             category: finding.category,
             timestamp: `${finding.startTimeSeconds}-${finding.endTimeSeconds}`
+          }
+        });
+      })();
+    },
+    updateContradictionStatus: (projectId, contradictionId, reviewStatus) => {
+      const contradiction = get().contradictions.find((item) => item.id === contradictionId);
+
+      if (!contradiction) {
+        return;
+      }
+
+      set((state) => ({
+        contradictions: state.contradictions.map((item) =>
+          item.id === contradictionId ? { ...item, reviewStatus } : item
+        )
+      }));
+
+      void (async () => {
+        const useBackend = await isPersistentBackendEnabled();
+
+        if (useBackend) {
+          try {
+            const { contradiction: persistedContradiction } = await backendApi.reviewContradiction(
+              projectId,
+              contradictionId,
+              reviewStatus
+            );
+
+            set((state) => ({
+              contradictions: state.contradictions.map((item) =>
+                item.id === contradictionId ? persistedContradiction : item
+              )
+            }));
+            await get().loadProjectBundle(projectId);
+            return;
+          } catch (error) {
+            set({
+              contradictions: get().contradictions.map((item) =>
+                item.id === contradictionId ? contradiction : item
+              ),
+              lastSyncError:
+                error instanceof Error ? error.message : "Unable to persist contradiction review action."
+            });
+            return;
+          }
+        }
+
+        await appendAuditEvent({
+          claimProjectId: projectId,
+          audioAssetId: contradiction.audioAssetId,
+          eventType: reviewStatus === "approved" ? "contradictionApproved" : "contradictionRejected",
+          targetType: "contradiction",
+          targetId: contradictionId,
+          summary: `${reviewStatus === "approved" ? "Approved" : "Rejected"} contradiction: ${
+            contradiction.title
+          }.`,
+          metadata: {
+            previousStatus: contradiction.reviewStatus,
+            newStatus: reviewStatus,
+            timestampA: contradiction.timestampA,
+            timestampB: contradiction.timestampB
           }
         });
       })();
@@ -614,7 +684,11 @@ export const useClaimAudioStore = create<ClaimAudioState>((set, get) => {
             await get().loadProjectBundle(projectId);
             return;
           } catch (error) {
-            set({ lastSyncError: error instanceof Error ? error.message : "Unable to persist finding edit." });
+            set((state) => ({
+              findings: state.findings.map((item) => (item.id === findingId ? finding : item)),
+              lastSyncError: error instanceof Error ? error.message : "Unable to persist finding edit."
+            }));
+            return;
           }
         }
 
@@ -669,6 +743,7 @@ export const useClaimAudioStore = create<ClaimAudioState>((set, get) => {
           return;
         } catch (error) {
           set({ lastSyncError: error instanceof Error ? error.message : "Unable to persist evidence clip." });
+          return;
         }
       }
 
@@ -988,6 +1063,7 @@ export const useClaimAudioStore = create<ClaimAudioState>((set, get) => {
             return;
           } catch (error) {
             set({ lastSyncError: error instanceof Error ? error.message : "Unable to persist generated export." });
+            return;
           }
         }
 

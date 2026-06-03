@@ -15,6 +15,11 @@ export interface StoreExportArtifactResult {
   expiresAt: string;
 }
 
+export interface SignedExportDownloadUrlResult {
+  downloadUrl: string;
+  expiresAt: string;
+}
+
 export class AwsExportArtifactService {
   private readonly s3Client: S3Client;
 
@@ -44,13 +49,25 @@ export class AwsExportArtifactService {
       })
     );
 
+    return {
+      storageKey,
+      ...(await this.createSignedDownloadUrl(storageKey))
+    };
+  }
+
+  async createSignedDownloadUrl(storageKey: string): Promise<SignedExportDownloadUrlResult> {
+    const { exportBucket } = getAwsRuntimeConfig();
+
+    if (!exportBucket) {
+      throw new Error("AWS_S3_EXPORT_BUCKET is required for production export downloads.");
+    }
+
     const command = new GetObjectCommand({
       Bucket: exportBucket,
       Key: storageKey
     });
 
     return {
-      storageKey,
       downloadUrl: await getSignedUrl(this.s3Client, command, { expiresIn: 15 * 60 }),
       expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString()
     };

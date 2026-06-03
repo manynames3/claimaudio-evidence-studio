@@ -19,6 +19,10 @@ type ReviewActionRequest =
       findingId: string;
       reviewStatus: "edited";
       updates: Pick<EvidenceFinding, "title" | "whyItMatters" | "recommendedFollowUp" | "notes">;
+    }
+  | {
+      contradictionId: string;
+      reviewStatus: Extract<ReviewStatus, "approved" | "rejected">;
     };
 
 const nowIso = () => new Date().toISOString();
@@ -41,6 +45,60 @@ export async function POST(request: NextRequest, context: RouteContext) {
     const body = (await request.json()) as ReviewActionRequest;
     const repository = createClaimAudioRepository(authResult.auth.tenantId);
     const bundle = await repository.getProjectBundle(id);
+
+    if ("contradictionId" in body) {
+      const currentContradiction = bundle?.contradictions.find(
+        (contradiction) => contradiction.id === body.contradictionId
+      );
+
+      if (!bundle?.project || !currentContradiction) {
+        return jsonError("Project or contradiction not found.", 404);
+      }
+
+      const updatedContradiction = await repository.updateContradictionReviewStatus(
+        body.contradictionId,
+        body.reviewStatus
+      );
+
+      if (!updatedContradiction) {
+        return jsonError("Contradiction not found.", 404);
+      }
+
+      await repository.recordAuditEvent({
+        id: `audit-${crypto.randomUUID()}`,
+        claimProjectId: bundle.project.id,
+        audioAssetId: currentContradiction.audioAssetId,
+        eventType: body.reviewStatus === "approved" ? "contradictionApproved" : "contradictionRejected",
+        actor: actorLabel(authResult.auth),
+        targetType: "contradiction",
+        targetId: body.contradictionId,
+        summary: `${body.reviewStatus === "approved" ? "Approved" : "Rejected"} contradiction: ${
+          updatedContradiction.title
+        }.`,
+        metadata: {
+          previousStatus: currentContradiction.reviewStatus,
+          newStatus: updatedContradiction.reviewStatus,
+          timestampA: updatedContradiction.timestampA,
+          timestampB: updatedContradiction.timestampB
+        },
+        createdAt: nowIso()
+      });
+      await repository.recordUserReviewAction({
+        id: `review-${crypto.randomUUID()}`,
+        claimProjectId: bundle.project.id,
+        audioAssetId: currentContradiction.audioAssetId,
+        targetType: "contradiction",
+        targetId: body.contradictionId,
+        action: body.reviewStatus,
+        previousValue: currentContradiction,
+        newValue: updatedContradiction,
+        userId: authResult.auth.userId,
+        createdAt: nowIso()
+      });
+
+      return jsonOk({ contradiction: updatedContradiction });
+    }
+
     const currentFinding = bundle?.findings.find((finding) => finding.id === body.findingId);
 
     if (!bundle?.project || !currentFinding) {

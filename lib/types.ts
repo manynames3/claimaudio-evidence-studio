@@ -141,6 +141,7 @@ export interface ExportMemo {
   includedFindingIds: string[];
   includedContradictionIds: string[];
   includedClipIds: string[];
+  s3ExportKey?: string;
   createdAt: string;
 }
 
@@ -176,6 +177,8 @@ export type AuditEventType =
   | "findingApproved"
   | "findingRejected"
   | "findingEdited"
+  | "contradictionApproved"
+  | "contradictionRejected"
   | "clipCreated"
   | "exportGenerated"
   | "exportDownloaded"
@@ -191,7 +194,7 @@ export interface AuditLogEvent {
   audioAssetId?: string;
   eventType: AuditEventType;
   actor: string;
-  targetType: "project" | "audio" | "transcript" | "analysis" | "finding" | "clip" | "export";
+  targetType: "project" | "audio" | "transcript" | "analysis" | "finding" | "contradiction" | "clip" | "export";
   targetId: string;
   summary: string;
   metadata?: Record<string, unknown>;
@@ -214,4 +217,7 @@ export interface GeneratedExport {
   content: string;
   fileName: string;
   exportType: ExportMemo["exportType"];
+  storageKey?: string;
+  downloadUrl?: string;
+  expiresAt?: string;
 }

@@ -186,6 +186,20 @@ export const backendApi = {
     });
   },
 
+  async reviewContradiction(
+    projectId: string,
+    contradictionId: string,
+    reviewStatus: Extract<ReviewStatus, "approved" | "rejected">
+  ) {
+    return fetchJson<{ contradiction: Contradiction }>(`/api/projects/${projectId}/review-actions`, {
+      method: "POST",
+      body: JSON.stringify({
+        contradictionId,
+        reviewStatus
+      })
+    });
+  },
+
   async createClip(
     projectId: string,
     input: Pick<
@@ -217,10 +231,13 @@ export const backendApi = {
       exportType: ExportMemo["exportType"];
     }
   ) {
-    return fetchJson<{ ok: true }>(`/api/projects/${projectId}/exports/download`, {
-      method: "POST",
-      body: JSON.stringify(input)
-    });
+    return fetchJson<{ ok: true; downloadUrl?: string; expiresAt?: string }>(
+      `/api/projects/${projectId}/exports/download`,
+      {
+        method: "POST",
+        body: JSON.stringify(input)
+      }
+    );
   },
 
   async updateSupervisorReview(

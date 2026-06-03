@@ -21,6 +21,25 @@ export interface AwsContradictionDetectionInput {
   comparisonStatementSegments?: PromptTranscriptSegment[];
 }
 
+export interface AwsContradictionCandidate {
+  title?: string;
+  statementA?: string;
+  statementB?: string;
+  quoteA?: string;
+  quoteB?: string;
+  timestampA?: number;
+  timestampB?: number;
+  sourceAId?: string;
+  sourceBId?: string;
+  whyItMatters?: string;
+  reviewStatus?: "pending";
+}
+
+export interface AwsContradictionDetectionResult {
+  contradictions: AwsContradictionCandidate[];
+  rawModelText: string;
+}
+
 export class AwsAnalysisService {
   private readonly bedrockClient: BedrockRuntimeClient;
 
@@ -46,15 +65,17 @@ export class AwsAnalysisService {
     };
   }
 
-  async detectContradictions(input: AwsContradictionDetectionInput) {
+  async detectContradictions(input: AwsContradictionDetectionInput): Promise<AwsContradictionDetectionResult> {
     const prompt = buildContradictionDetectionPrompt(input);
     const rawModelText = await this.invokeJsonPrompt(prompt);
+    const parsed = JSON.parse(extractJsonObject(rawModelText)) as {
+      contradictions?: AwsContradictionCandidate[];
+    };
 
-    // TODO: Add contradiction JSON schema validation before persistence.
     // TODO: Compare statement-vs-document evidence when uploaded documents are added to the product.
     return {
-      rawModelText,
-      parsed: JSON.parse(extractJsonObject(rawModelText)) as unknown
+      contradictions: parsed.contradictions || [],
+      rawModelText
     };
   }
 

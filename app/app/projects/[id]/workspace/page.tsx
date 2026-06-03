@@ -41,6 +41,7 @@ export default function EvidenceWorkspacePage({ params }: { params: Promise<{ id
     selectTranscriptSegment,
     selectFinding,
     updateFindingStatus,
+    updateContradictionStatus,
     editFinding,
     createClip,
     updateSupervisorReview,
@@ -233,8 +234,10 @@ export default function EvidenceWorkspacePage({ params }: { params: Promise<{ id
                   {projectContradictions.map((contradiction) => (
                     <ContradictionCard
                       key={contradiction.id}
+                      projectId={project.id}
                       contradiction={contradiction}
                       onJump={setCurrentTime}
+                      onStatusChange={updateContradictionStatus}
                     />
                   ))}
                 </div>

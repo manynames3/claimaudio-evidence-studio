@@ -22,6 +22,8 @@ const eventLabels: Record<AuditLogEvent["eventType"], string> = {
   findingApproved: "Finding approved",
   findingRejected: "Finding rejected",
   findingEdited: "Finding edited",
+  contradictionApproved: "Contradiction approved",
+  contradictionRejected: "Contradiction rejected",
   clipCreated: "Clip created",
   exportGenerated: "Export generated",
   exportDownloaded: "Export downloaded",

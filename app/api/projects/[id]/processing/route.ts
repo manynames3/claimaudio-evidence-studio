@@ -10,7 +10,7 @@ import { assertNeonConfigured, jsonError, jsonOk, requireAuth } from "@/lib/serv
 import { writableRoles } from "@/lib/server/auth";
 import { getAwsRuntimeConfig, getRuntimeBackendStatus } from "@/lib/server/env";
 import type { ClaimAudioRepository } from "@/lib/db/claim-audio-repository";
-import type { AudioAsset, ClaimProject, EvidenceFinding, Severity, TranscriptSegment } from "@/lib/types";
+import type { AudioAsset, ClaimProject, Contradiction, EvidenceFinding, Severity, TranscriptSegment } from "@/lib/types";
 
 interface RouteContext {
   params: Promise<{
@@ -337,7 +337,7 @@ export async function GET(_request: Request, context: RouteContext) {
       transcribeStatus: status.status,
       transcriptSegments: transcriptSegments.length,
       findings: analysisSummary.findings,
-      contradictions: bundle.contradictions.length,
+      contradictions: analysisSummary.contradictions,
       message: analysisSummary.message
     });
   } catch (error) {
@@ -356,6 +356,7 @@ async function runOptionalBedrockAnalysis(input: {
   if (transcriptSegments.length === 0) {
     return {
       findings: 0,
+      contradictions: 0,
       message: "Real transcript is ready for review. No transcript segments were available for AI evidence extraction."
     };
   }
@@ -384,10 +385,30 @@ async function runOptionalBedrockAnalysis(input: {
     const findings = extraction.findings
       .map((candidate, index) => toEvidenceFinding(candidate, audioAsset.id, index))
       .filter((finding) => hasQuoteSupport(finding, transcriptSegments));
+    const contradictionDetection = await awsAnalysisService.detectContradictions({
+      claimContext: {
+        claimNumber: project.claimNumber,
+        claimType: project.claimType,
+        lineOfBusiness: project.lineOfBusiness,
+        claimantName: project.claimantName,
+        insuredName: project.insuredName,
+        lossDate: project.lossDate
+      },
+      currentStatementSegments: transcriptSegments.map((segment) => ({
+        id: segment.id,
+        speaker: segment.speaker,
+        text: segment.text,
+        startTimeSeconds: segment.startTimeSeconds,
+        endTimeSeconds: segment.endTimeSeconds
+      }))
+    });
+    const contradictions = contradictionDetection.contradictions
+      .map((candidate, index) => toContradiction(candidate, audioAsset.id, index))
+      .filter((contradiction) => hasContradictionQuoteSupport(contradiction, transcriptSegments));
 
     await repository.saveAnalysisResult({
       findings,
-      contradictions: [],
+      contradictions,
       clips: [],
       exportMemos: []
     });
@@ -399,30 +420,54 @@ async function runOptionalBedrockAnalysis(input: {
       actor: "System",
       targetType: "analysis",
       targetId: audioAsset.id,
-      summary: `Bedrock evidence extraction completed with ${findings.length} quote-supported findings.`,
+      summary: `Bedrock evidence extraction completed with ${findings.length} quote-supported findings and ${contradictions.length} contradiction pairs.`,
       metadata: {
         modelProvider: "amazon-bedrock",
         rawFindingCount: extraction.findings.length,
-        persistedFindingCount: findings.length
+        persistedFindingCount: findings.length,
+        rawContradictionCount: contradictionDetection.contradictions.length,
+        persistedContradictionCount: contradictions.length
       },
       createdAt: nowIso()
     });
 
     return {
       findings: findings.length,
+      contradictions: contradictions.length,
       message:
-        findings.length > 0
-          ? "Real transcript and Bedrock evidence findings are ready for human review."
-          : "Real transcript is ready for review. Bedrock returned no quote-supported findings."
+        findings.length > 0 || contradictions.length > 0
+          ? "Real transcript, Bedrock evidence findings, and contradiction pairs are ready for human review."
+          : "Real transcript is ready for review. Bedrock returned no quote-supported findings or contradiction pairs."
     };
   } catch (error) {
     return {
       findings: 0,
+      contradictions: 0,
       message: `Real transcript is ready for review. Bedrock evidence extraction did not complete: ${
         error instanceof Error ? error.message : "Unknown analysis error"
       }`
     };
   }
+}
+
+function toContradiction(
+  candidate: Awaited<ReturnType<AwsAnalysisService["detectContradictions"]>>["contradictions"][number],
+  audioAssetId: string,
+  index: number
+): Contradiction {
+  return {
+    id: `${audioAssetId}-bedrock-contradiction-${String(index + 1).padStart(3, "0")}`,
+    audioAssetId,
+    title: candidate.title?.trim() || "Potential inconsistency requires review",
+    statementA: candidate.statementA?.trim() || "First statement requires review.",
+    statementB: candidate.statementB?.trim() || "Second statement requires review.",
+    quoteA: candidate.quoteA?.trim() || "",
+    quoteB: candidate.quoteB?.trim() || "",
+    timestampA: Number(candidate.timestampA || 0),
+    timestampB: Number(candidate.timestampB || 0),
+    whyItMatters: candidate.whyItMatters?.trim() || "Requires human review before claim-file reliance.",
+    reviewStatus: "pending"
+  };
 }
 
 function toEvidenceFinding(
@@ -460,6 +505,26 @@ function hasQuoteSupport(finding: EvidenceFinding, transcriptSegments: Transcrip
   const normalizedQuote = normalizeText(finding.exactQuote);
 
   return Boolean(normalizedQuote) && normalizeText(relatedText).includes(normalizedQuote);
+}
+
+function hasContradictionQuoteSupport(contradiction: Contradiction, transcriptSegments: TranscriptSegment[]) {
+  return (
+    hasQuoteNearTimestamp(contradiction.quoteA, contradiction.timestampA, transcriptSegments) &&
+    hasQuoteNearTimestamp(contradiction.quoteB, contradiction.timestampB, transcriptSegments)
+  );
+}
+
+function hasQuoteNearTimestamp(quote: string, timestamp: number, transcriptSegments: TranscriptSegment[]) {
+  const nearbyText = transcriptSegments
+    .filter(
+      (segment) =>
+        segment.startTimeSeconds <= timestamp + 12 &&
+        segment.endTimeSeconds >= Math.max(0, timestamp - 12)
+    )
+    .map((segment) => segment.text)
+    .join(" ");
+
+  return Boolean(normalizeText(quote)) && normalizeText(nearbyText).includes(normalizeText(quote));
 }
 
 function normalizeSeverity(value: unknown): Severity {

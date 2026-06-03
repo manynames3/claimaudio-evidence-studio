@@ -1,9 +1,11 @@
 import { NextRequest } from "next/server";
 import { createClaimAudioRepository } from "@/lib/db/claim-audio-repository";
 import { exportService } from "@/lib/services";
+import { AwsExportArtifactService } from "@/lib/services/aws";
 import { assertNeonConfigured, jsonError, jsonOk, requireAuth } from "@/lib/server/api";
 import { actorLabel, exportRoles } from "@/lib/server/auth";
-import type { EvidenceFinding, ExportMemo } from "@/lib/types";
+import { getAwsRuntimeConfig } from "@/lib/server/env";
+import type { Contradiction, EvidenceFinding, ExportMemo, GeneratedExport } from "@/lib/types";
 
 interface RouteContext {
   params: Promise<{
@@ -41,6 +43,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
 
     const reviewedFindings = bundle.findings.filter(isReviewedFinding);
+    const reviewedContradictions = bundle.contradictions.filter(isReviewedContradiction);
     const claimFileExportTypes: ExportMemo["exportType"][] = [
       "statementSummary",
       "timestampedEvidenceMemo"
@@ -58,28 +61,57 @@ export async function POST(request: NextRequest, context: RouteContext) {
       );
     }
 
-    // TODO: Store generated PDF/DOCX/HTML in encrypted S3 and return a signed download URL.
+    if (exportType === "contradictionReport" && reviewedContradictions.length === 0) {
+      return jsonError(
+        "At least one approved contradiction is required before generating a contradiction report.",
+        409,
+        {
+          exportType,
+          pendingContradictions: bundle.contradictions.filter(
+            (contradiction) => contradiction.reviewStatus === "pending"
+          ).length,
+          rejectedContradictions: bundle.contradictions.filter(
+            (contradiction) => contradiction.reviewStatus === "rejected"
+          ).length
+        }
+      );
+    }
+
     // TODO: Production PDF/DOCX exports should include reviewer signature, tenant retention label, and S3/KMS object metadata.
     const generatedExport = await exportService.generateExport({
       project: bundle.project,
       findings: exportType === "supervisorReviewPacket" ? bundle.findings : reviewedFindings,
       transcriptSegments: bundle.transcriptSegments,
-      contradictions: bundle.contradictions,
+      contradictions: exportType === "supervisorReviewPacket" ? bundle.contradictions : reviewedContradictions,
       clips: bundle.clips,
       exportType
     });
+    const storedExport = await storeExportArtifactIfConfigured(bundle.project.id, generatedExport);
+    const generatedExportWithStorage = storedExport
+      ? {
+          ...generatedExport,
+          storageKey: storedExport.storageKey,
+          downloadUrl: storedExport.downloadUrl,
+          expiresAt: storedExport.expiresAt
+        }
+      : generatedExport;
     const exportMemo: ExportMemo = {
       id: `export-${crypto.randomUUID()}`,
       claimProjectId: bundle.project.id,
       audioAssetId: bundle.audioAsset.id,
       exportType,
-      title: generatedExport.title,
-      content: generatedExport.content,
-      includedFindingIds: bundle.findings
-        .filter(isReviewedFinding)
-        .map((finding) => finding.id),
-      includedContradictionIds: bundle.contradictions.map((contradiction) => contradiction.id),
+      title: generatedExportWithStorage.title,
+      content: generatedExportWithStorage.content,
+      includedFindingIds:
+        exportType === "supervisorReviewPacket"
+          ? bundle.findings.map((finding) => finding.id)
+          : reviewedFindings.map((finding) => finding.id),
+      includedContradictionIds:
+        exportType === "supervisorReviewPacket"
+          ? bundle.contradictions.map((contradiction) => contradiction.id)
+          : reviewedContradictions.map((contradiction) => contradiction.id),
       includedClipIds: bundle.clips.map((clip) => clip.id),
+      s3ExportKey: storedExport?.storageKey,
       createdAt: nowIso()
     };
 
@@ -92,11 +124,15 @@ export async function POST(request: NextRequest, context: RouteContext) {
       actor: actorLabel(authResult.auth),
       targetType: "export",
       targetId: exportMemo.id,
-      summary: `Generated export: ${generatedExport.fileName}.`,
+      summary: `Generated export: ${generatedExportWithStorage.fileName}.`,
       metadata: {
         exportType,
-        format: generatedExport.format,
+        format: generatedExportWithStorage.format,
         reviewedFindingCount: reviewedFindings.length,
+        reviewedContradictionCount: reviewedContradictions.length,
+        storageMode: storedExport ? "s3-signed-url" : "browser-download",
+        s3ExportKey: storedExport?.storageKey,
+        signedDownloadExpiresAt: storedExport?.expiresAt,
         generatedBy: authResult.auth.userId
       },
       createdAt: nowIso()
@@ -110,14 +146,16 @@ export async function POST(request: NextRequest, context: RouteContext) {
       action: "exported",
       newValue: {
         exportType,
-        fileName: generatedExport.fileName,
-        includedFindingIds: exportMemo.includedFindingIds
+        fileName: generatedExportWithStorage.fileName,
+        storageMode: storedExport ? "s3-signed-url" : "browser-download",
+        includedFindingIds: exportMemo.includedFindingIds,
+        includedContradictionIds: exportMemo.includedContradictionIds
       },
       userId: authResult.auth.userId,
       createdAt: nowIso()
     });
 
-    return jsonOk({ generatedExport, exportMemo });
+    return jsonOk({ generatedExport: generatedExportWithStorage, exportMemo });
   } catch (error) {
     return jsonError("Failed to generate export.", 500, error instanceof Error ? error.message : error);
   }
@@ -125,4 +163,35 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
 function isReviewedFinding(finding: EvidenceFinding) {
   return finding.reviewStatus === "approved" || finding.reviewStatus === "edited";
+}
+
+function isReviewedContradiction(contradiction: Contradiction) {
+  return contradiction.reviewStatus === "approved" || contradiction.reviewStatus === "edited";
+}
+
+async function storeExportArtifactIfConfigured(
+  claimProjectId: string,
+  generatedExport: GeneratedExport
+) {
+  if (!hasAwsExportStorageConfig()) {
+    return undefined;
+  }
+
+  const exportArtifactService = new AwsExportArtifactService();
+
+  return exportArtifactService.storeExportArtifact({
+    claimProjectId,
+    generatedExport
+  });
+}
+
+function hasAwsExportStorageConfig() {
+  const { exportBucket, kmsKeyArn } = getAwsRuntimeConfig();
+
+  return Boolean(
+    exportBucket &&
+      kmsKeyArn &&
+      process.env.AWS_ACCESS_KEY_ID &&
+      process.env.AWS_SECRET_ACCESS_KEY
+  );
 }

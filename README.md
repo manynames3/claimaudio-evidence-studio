@@ -41,8 +41,8 @@ The sample-statement demo path uses a synthetic Amazon Polly recorded statement 
 - starts an Amazon Transcribe batch job
 - normalizes Transcribe JSON into timestamped transcript segments
 - invokes Amazon Bedrock with strict quote/timestamp evidence prompts
-- persists only findings that pass validation and quote-support checks
-- generates claim-file-style HTML evidence memo exports from reviewed findings
+- persists only findings and contradiction pairs that pass validation and quote-support checks
+- generates claim-file-style HTML evidence memo and contradiction report exports from reviewed evidence
 - records export generation and export download as separate audit events
 
 If Neon is configured but AWS is not, the UI disables real audio upload and keeps the sample statement available. This prevents creating claim records that cannot actually receive or transcribe audio.
@@ -131,7 +131,7 @@ The frontend is backend-aware:
 - Dashboard hydrates from `GET /api/projects`.
 - Project overview, workspace, and export center hydrate from `GET /api/projects/[id]`.
 - New project creation uses `POST /api/projects` when Neon is configured, then starts `POST /api/projects/[id]/processing`.
-- Finding approvals/rejections/edits use `POST /api/projects/[id]/review-actions`.
+- Finding approvals/rejections/edits and contradiction approvals/rejections use `POST /api/projects/[id]/review-actions`.
 - Clip creation uses `POST /api/projects/[id]/clips`.
 - Export generation uses `POST /api/projects/[id]/exports`.
 - Export downloads are audited through `POST /api/projects/[id]/exports/download`.
