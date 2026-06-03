@@ -1,0 +1,83 @@
+Synthetic recorded statement sample.
+Scenario: Auto BI claimant statement - lane change, delayed treatment, prior lower back condition, work errand coverage issue.
+Recommended length: 8-12 minutes when read naturally.
+
+Demo targets:
+- Liability: claimant was changing lanes before impact.
+- Liability: claimant glanced down because phone buzzed.
+- Credibility: signal use and speed estimate are uncertain.
+- Injury: pain timeline changes from "same day" to "two days later."
+- Prior Condition: previous lower back strain and physical therapy.
+- Damages: vehicle was drivable, no airbags, repair estimate missing.
+- Coverage: claimant was picking up supplies for work.
+- Follow-up: missing witness contact information, photos, urgent care records, employer errand details.
+- Contradictions:
+  - "I was not changing lanes" vs "I had started moving right."
+  - "I felt back pain right away" vs "my lower back started hurting two days later."
+  - "I was going about thirty-five" vs "it could have been closer to forty-five."
+
+Adjuster: This is Daniel Price with North Harbor Mutual. Today is May 16, 2026. This is a recorded statement for claim AUTO-BI-SYNTH-101. I am speaking with Maria Santos. Maria, do I have your permission to record this statement?
+Claimant: Yes, that is fine.
+Adjuster: Please confirm your full name and mailing address.
+Claimant: My name is Maria Santos. My mailing address is 418 Harbor Lane, Tampa, Florida.
+Adjuster: We are discussing the motor vehicle accident from May 14, 2026. Were you driving the gray 2021 Toyota Corolla?
+Claimant: Yes, I was driving the Corolla.
+Adjuster: Where were you coming from and where were you headed?
+Claimant: I left my apartment and was going to pick up office supplies before going to work.
+Adjuster: Were those supplies for your employer?
+Claimant: Yes. My manager asked me to pick up printer toner and receipt paper.
+Adjuster: Was that something you were doing as part of your job duties?
+Claimant: I guess yes. I was doing it because my manager asked.
+Adjuster: Tell me what happened just before the impact.
+Claimant: I was in the middle lane on Fletcher Avenue. Traffic was moving, not stopped. The white SUV came up on my right and hit me.
+Adjuster: Were you changing lanes at the time?
+Claimant: No, I was not changing lanes. I was in my lane.
+Adjuster: Had you started to move toward the right lane?
+Claimant: I mean, I had checked my mirror and I was thinking about moving right, but I was still mostly in the middle lane.
+Adjuster: Did you activate your turn signal?
+Claimant: I believe I did. I always use my signal.
+Adjuster: Are you certain the signal was on?
+Claimant: I cannot say one hundred percent. It happened fast, but I usually signal.
+Adjuster: Were you looking straight ahead when you checked the lane?
+Claimant: Mostly, yes. My phone buzzed in the cup holder, and I glanced down for maybe a second, but I was not texting.
+Adjuster: About how fast were you traveling?
+Claimant: Around thirty-five miles per hour.
+Adjuster: Is that an estimate?
+Claimant: Yes. It might have been forty, maybe closer to forty-five. I do not remember exactly.
+Adjuster: What part of your vehicle was struck?
+Claimant: The front passenger door and the right front fender.
+Adjuster: Was your vehicle drivable after the accident?
+Claimant: Yes, I drove it home. The passenger door made a scraping sound, but it still opened.
+Adjuster: Did airbags deploy?
+Claimant: No, no airbags deployed.
+Adjuster: Did police come to the scene?
+Claimant: No. We moved into a gas station parking lot and exchanged information.
+Adjuster: Were there any witnesses?
+Claimant: There was a man at the gas station who said he saw it, but I did not get his full name. I think his first name was Kevin.
+Adjuster: Did you get Kevin's phone number?
+Claimant: No, I forgot to ask before he left.
+Adjuster: Did you take photos at the scene?
+Claimant: Yes, I took photos of the cars in the parking lot and then more photos when I got home.
+Adjuster: Did you feel injured at the scene?
+Claimant: At the scene I was shaken up, but I told the other driver I was okay.
+Adjuster: When did you first feel pain?
+Claimant: My neck felt tight later that evening. My lower back started hurting two days later.
+Adjuster: Earlier in your claim report, you said you felt back pain right away. Do you remember saying that?
+Claimant: I might have said I felt pain after the accident. I do not remember saying it was right away.
+Adjuster: Did you seek treatment on May 14?
+Claimant: No. I went to urgent care on May 18 because the back pain was not going away.
+Adjuster: Did you receive any treatment before urgent care?
+Claimant: Just ice, ibuprofen, and rest.
+Adjuster: Have you ever had lower back problems before this accident?
+Claimant: I had a lower back strain about three years ago from moving furniture, but it got better after physical therapy.
+Adjuster: Any treatment for your back in the last year before this accident?
+Claimant: No treatment in the last year.
+Adjuster: Did urgent care refer you anywhere?
+Claimant: They told me to follow up with my primary doctor and maybe physical therapy if it did not improve.
+Adjuster: Did you miss work?
+Claimant: I missed one full day and worked from home for two days.
+Adjuster: Do you have a repair estimate?
+Claimant: Not yet. The body shop said they could inspect it next week.
+Adjuster: Is there anything else we should know?
+Claimant: I still think the SUV was speeding, but I cannot say exactly how fast. I was trying to get over and then everything happened quickly.
+Adjuster: Thank you. This concludes the recorded statement at 3:42 PM on May 16, 2026.

@@ -1,0 +1,80 @@
+Synthetic recorded statement sample.
+Scenario: Insured statement - rear-end loss, low-impact facts, coverage ambiguity, inconsistent braking/speed details.
+Recommended length: 7-10 minutes when read naturally.
+
+Demo targets:
+- Liability: insured admits looking at navigation before braking.
+- Damages: low-speed impact, no airbags, claimant vehicle drove away.
+- Injury: claimant said he was fine at scene but later alleged neck/back injury.
+- Prior Condition: insured mentions claimant was wearing a back brace or moving stiffly before collision.
+- Coverage: insured was driving for a rideshare app but says app was off.
+- Credibility: speed estimate changes.
+- Follow-up: app status logs, dashcam, repair estimate, scene photos.
+- Contradictions:
+  - "The app was off" vs "I had just dropped off a passenger and was waiting for the next ride."
+  - "I was stopped" vs "I was rolling maybe five to ten miles per hour."
+  - "There was no damage" vs "my bumper cover cracked on the right side."
+
+Adjuster: This is Rachel Morgan with North Harbor Mutual. Today is May 17, 2026. This is a recorded statement for claim AUTO-BI-SYNTH-202. I am speaking with our insured, Evan Brooks. Evan, do I have your permission to record this statement?
+Insured: Yes, you do.
+Adjuster: Please confirm your name and address.
+Insured: Evan Brooks. I live at 127 Pine Ridge Drive, Orlando, Florida.
+Adjuster: We are discussing the May 15, 2026 accident involving your blue Honda Accord and a black Nissan Altima. Were you driving the Accord?
+Insured: Yes.
+Adjuster: Please tell me what happened.
+Insured: Traffic slowed suddenly near the exit ramp. I braked, but the Altima in front of me stopped faster than I expected, and my front bumper touched the back of their car.
+Adjuster: When you say touched, was there an impact?
+Insured: Yes, but it was very light.
+Adjuster: Were you stopped before contact?
+Insured: I was basically stopped.
+Adjuster: Basically stopped meaning completely stopped or still moving?
+Insured: I may have been rolling, maybe five to ten miles per hour, but not fast.
+Adjuster: About how fast were you traveling before traffic slowed?
+Insured: Maybe twenty-five.
+Adjuster: Earlier in your online report, you wrote forty miles per hour. Which is more accurate?
+Insured: I meant the speed limit was forty. I do not think I was actually going forty.
+Adjuster: What were you doing just before traffic slowed?
+Insured: Watching traffic.
+Adjuster: Were you looking at anything else?
+Insured: My navigation screen was on. I glanced at it to check the exit, but I was not on my phone.
+Adjuster: Was your phone mounted?
+Insured: It was in the center console, connected to the car screen.
+Adjuster: Was this a personal trip?
+Insured: Yes, personal.
+Adjuster: Do you drive for any rideshare or delivery company?
+Insured: Sometimes, yes.
+Adjuster: Were you logged into a rideshare app at the time?
+Insured: No, the app was off.
+Adjuster: Had you been working rideshare earlier that day?
+Insured: I had just dropped someone off about ten minutes earlier, but I was done.
+Adjuster: Were you waiting for another ride request?
+Insured: I was not actively taking one. The app might have still been open, but I was not on a ride.
+Adjuster: Did airbags deploy?
+Insured: No.
+Adjuster: Was your vehicle drivable?
+Insured: Yes. I drove away after exchanging information.
+Adjuster: What damage did you see?
+Insured: At first I thought there was no damage. Later I saw the front bumper cover cracked on the right side.
+Adjuster: Did the claimant's vehicle drive away?
+Insured: Yes, the Altima drove away.
+Adjuster: Did the claimant say he was injured?
+Insured: No. He said he was fine. He was walking around and taking pictures.
+Adjuster: Did you notice anything unusual about him physically?
+Insured: He seemed stiff, but he also had a black back brace or support belt on under his shirt. I saw it when he bent down near the bumper.
+Adjuster: Did police respond?
+Insured: No, we exchanged information and left.
+Adjuster: Were there witnesses?
+Insured: I do not think so.
+Adjuster: Do you have photos?
+Insured: Yes, I took photos of both bumpers.
+Adjuster: Do you have dashcam footage?
+Insured: My dashcam might have recorded it, but I need to check the memory card.
+Adjuster: Did you say anything to the claimant at the scene?
+Insured: I apologized and said I did not expect him to stop that suddenly.
+Adjuster: Do you believe you caused the accident?
+Insured: I understand I hit him from behind, but I think he braked very suddenly.
+Adjuster: Have you received a repair estimate?
+Insured: Not yet. I have an appointment Monday.
+Adjuster: Is there anything else we should know?
+Insured: Only that it was a very minor bump. I was surprised when I heard he was claiming neck and back injuries.
+Adjuster: Thank you. This concludes the recorded statement at 10:18 AM on May 17, 2026.

@@ -1,0 +1,53 @@
+Synthetic recorded statement sample.
+Scenario: Witness statement designed to compare against script 03.
+Recommended length: 5-8 minutes when read naturally.
+
+Demo targets:
+- Cross-statement contradiction: witness says claimant light was yellow/red, not green.
+- Liability: claimant accelerated through intersection.
+- Credibility: witness saw claimant holding phone near steering wheel.
+- Injury: claimant walked normally and said she was okay.
+- Follow-up: witness contact, camera source, location vantage point.
+- Contradictions vs script 03:
+  - Claimant: "It was green." Witness: "It was yellow and then red before she entered."
+  - Claimant: "My phone was in my bag." Witness: "I saw a phone in her left hand."
+  - Claimant: "I slammed on the brakes." Witness: "I did not see brake lights until the impact."
+  - Claimant: "My shoulder hurt right away." Witness: "She said she was okay and declined help."
+
+Adjuster: This is Rachel Morgan with North Harbor Mutual. Today is May 19, 2026. This is a recorded witness statement for claim AUTO-BI-SYNTH-303. I am speaking with Allison Reed. Allison, do I have your permission to record this statement?
+Witness: Yes.
+Adjuster: Please confirm your full name and best contact number.
+Witness: Allison Reed. My phone number is 813-555-0148.
+Adjuster: Were you present near the intersection of 4th Street and Central Avenue on May 12, 2026?
+Witness: Yes. I was outside the coffee shop on the southeast corner.
+Adjuster: Could you see the traffic light for the red Kia traveling on 4th Street?
+Witness: Yes, I could see it from where I was standing.
+Adjuster: What did you observe?
+Witness: The red Kia was coming toward the intersection. The light turned yellow, and instead of slowing down, the Kia seemed to speed up.
+Adjuster: Did the light turn red before the Kia entered the intersection?
+Witness: From my view, yes. It turned red just before the Kia entered.
+Adjuster: Did you see the other vehicle?
+Witness: Yes. A silver sedan was waiting to turn left. It started turning after the light changed.
+Adjuster: Did you see brake lights on the Kia?
+Witness: I did not see brake lights until right at the impact, maybe a split second before.
+Adjuster: Did you see the Kia driver using a phone?
+Witness: I saw a phone in her left hand near the steering wheel. I cannot say if she was texting, but it looked like she was holding it.
+Adjuster: Did you speak with the Kia driver after the collision?
+Witness: Yes. I asked if she needed an ambulance.
+Adjuster: What did she say?
+Witness: She said, I think I am okay, just shaken up.
+Adjuster: Did she mention shoulder or neck pain?
+Witness: Not to me.
+Adjuster: Did she appear injured?
+Witness: She walked around and took photos. She looked upset, but I did not see her limping or holding her shoulder.
+Adjuster: Did police arrive?
+Witness: Yes, an officer came.
+Adjuster: Did you give your contact information to anyone?
+Witness: I gave my first name and number to the Kia driver, but she seemed distracted and may have misplaced it.
+Adjuster: Did you speak with the officer?
+Witness: Briefly. I told the officer I thought the Kia entered late on the yellow or red.
+Adjuster: Are there cameras nearby?
+Witness: The coffee shop has a door camera. The bank across the street also has cameras facing the intersection.
+Adjuster: Is there anything else you remember?
+Witness: The Kia was moving faster than the other traffic. The silver car did turn left, but it looked like the Kia tried to beat the light.
+Adjuster: Thank you. This concludes the witness statement at 11:07 AM on May 19, 2026.

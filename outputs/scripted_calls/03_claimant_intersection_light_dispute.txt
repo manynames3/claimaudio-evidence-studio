@@ -1,0 +1,77 @@
+Synthetic recorded statement sample.
+Scenario: Claimant statement - intersection collision, disputed traffic light, evolving injury timeline, inconsistent seatbelt and witness facts.
+Recommended length: 8-12 minutes when read naturally.
+
+Demo targets:
+- Liability: claimant says she had green light but later says it may have turned yellow.
+- Credibility: speed estimate and brake timing are uncertain.
+- Injury: pain onset changes from immediate shoulder pain to next morning neck pain.
+- Damages: car was towed, airbags did not deploy.
+- Timeline: hospital visit delayed until next day.
+- Follow-up: traffic camera, police report, witness at coffee shop, seatbelt use, ER records.
+- Contradictions:
+  - "The light was green" vs "It could have turned yellow as I entered."
+  - "I was wearing my seatbelt" vs "I reached for the belt after I started driving."
+  - "I went to the hospital that night" vs "I went the next afternoon."
+
+Adjuster: This is Rachel Morgan with North Harbor Mutual. Today is May 18, 2026. This is a recorded statement for claim AUTO-BI-SYNTH-303. I am speaking with Denise Carter. Denise, do I have your permission to record this call?
+Claimant: Yes.
+Adjuster: Please confirm your full name and address.
+Claimant: Denise Carter. 214 West Bay Street, St. Petersburg, Florida.
+Adjuster: We are discussing the accident from May 12, 2026, at the intersection of 4th Street and Central Avenue. Were you driving the red Kia Forte?
+Claimant: Yes.
+Adjuster: Please describe what happened.
+Claimant: I was going straight through the intersection on 4th Street. The other car turned left in front of me, and I hit the passenger side.
+Adjuster: What color was your traffic light?
+Claimant: It was green.
+Adjuster: Are you certain it was green when you entered the intersection?
+Claimant: Yes, I remember seeing green.
+Adjuster: Did it ever turn yellow as you approached?
+Claimant: It might have turned yellow right as I entered, but I was already there.
+Adjuster: How fast were you traveling?
+Claimant: Around thirty miles per hour.
+Adjuster: Did you brake before impact?
+Claimant: I slammed on the brakes.
+Adjuster: Did you leave skid marks or hear tires squeal?
+Claimant: I do not remember. It happened very fast.
+Adjuster: Did you see the other car before it turned?
+Claimant: I saw it waiting to turn left, and then it just went.
+Adjuster: Were you distracted by anything?
+Claimant: No. I was watching the road.
+Adjuster: Were you using your phone?
+Claimant: No, my phone was in my bag.
+Adjuster: Were you wearing your seatbelt?
+Claimant: Yes, absolutely.
+Adjuster: Earlier in the intake form, you wrote that you buckled your seatbelt after pulling out of a parking spot. Can you explain that?
+Claimant: I may have reached for the belt after I started moving, but by the time of the crash it was on.
+Adjuster: Did airbags deploy?
+Claimant: No airbags deployed.
+Adjuster: Was your car drivable?
+Claimant: No. It was towed from the scene because fluid was leaking.
+Adjuster: Did police respond?
+Claimant: Yes, police came and took a report.
+Adjuster: Did the officer give anyone a citation?
+Claimant: I think the other driver got a ticket, but I am not completely sure.
+Adjuster: Were there witnesses?
+Claimant: A woman outside the coffee shop said the other driver turned too late.
+Adjuster: Did you get her name or number?
+Claimant: I got a first name, Allison, but I lost the piece of paper with her number.
+Adjuster: Did you feel injured at the scene?
+Claimant: My left shoulder hurt right away from the seatbelt.
+Adjuster: Did you have neck pain at the scene?
+Claimant: Not really at the scene. My neck pain was worse the next morning.
+Adjuster: When did you first seek medical treatment?
+Claimant: I went to the hospital that night.
+Adjuster: Do you mean the night of May 12?
+Claimant: Actually, it was the next afternoon, May 13. I waited because I thought it would get better.
+Adjuster: Have you had prior shoulder or neck treatment?
+Claimant: I had some neck stiffness last year after a gym injury, but I never had a car accident injury before.
+Adjuster: Did you miss work?
+Claimant: I missed two days and then went back half days.
+Adjuster: Have you received a repair estimate?
+Claimant: The shop said it might be a total loss, but I do not have the final estimate.
+Adjuster: Is there a traffic camera at that intersection?
+Claimant: I think there is one near the bank, but I do not know if it records.
+Adjuster: Is there anything else you want us to know?
+Claimant: The other driver should not have turned. I had the green or at least I was already in the intersection when it changed.
+Adjuster: Thank you. This concludes the recorded statement at 2:11 PM on May 18, 2026.

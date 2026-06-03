@@ -1,0 +1,30 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "claimaudio-evidence-studio",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-06-03",
+  "compatibility_flags": [
+    "nodejs_compat",
+    "nodejs_compat_populate_process_env",
+    "global_fetch_strictly_public"
+  ],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "CLAIMAUDIO_BACKEND_MODE": "neon-aws",
+    "CLAIMAUDIO_REQUIRE_AUTH": "true",
+    "CLAIMAUDIO_TENANT_ID": "11111111-1111-4111-8111-111111111111",
+    "AWS_REGION": "us-east-1",
+    "AWS_KMS_KEY_ARN": "arn:aws:kms:us-east-1:636305658578:key/94c3e559-4afb-469a-a621-bfb691a330dc",
+    "AWS_S3_AUDIO_BUCKET": "claimaudio-pilot-audio-636305658578",
+    "AWS_S3_EXPORT_BUCKET": "claimaudio-pilot-exports-636305658578",
+    "AWS_SQS_PROCESSING_QUEUE_URL": "https://sqs.us-east-1.amazonaws.com/636305658578/claimaudio-processing",
+    "AWS_STEP_FUNCTIONS_STATE_MACHINE_ARN": "arn:aws:states:us-east-1:636305658578:stateMachine:claimaudio-evidence-processing",
+    "AWS_BEDROCK_MODEL_ID": "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
+  }
+}
