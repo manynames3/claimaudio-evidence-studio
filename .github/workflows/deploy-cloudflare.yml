@@ -18,6 +18,8 @@ jobs:
     name: Build and deploy
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
     steps:
       - name: Checkout
@@ -37,6 +39,16 @@ jobs:
 
       - name: Validate AI guardrails
         run: npm run test:guardrails
+
+      - name: Check Cloudflare deploy secrets
+        run: |
+          if [ -z "$CLOUDFLARE_ACCOUNT_ID" ] || [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::error::Set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN as GitHub repository secrets before deploying from GitHub Actions."
+            exit 1
+          fi
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
       - name: Build Cloudflare bundle
         run: npm run cf:build
