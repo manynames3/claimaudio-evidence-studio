@@ -18,15 +18,13 @@ jobs:
     name: Build and deploy
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "22"
           cache: npm
@@ -41,9 +39,20 @@ jobs:
         run: npm run test:guardrails
 
       - name: Check Cloudflare deploy secrets
+        shell: bash
         run: |
-          if [ -z "$CLOUDFLARE_ACCOUNT_ID" ] || [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+          if [ -z "${CLOUDFLARE_ACCOUNT_ID}" ] || [ -z "${CLOUDFLARE_API_TOKEN}" ]; then
             echo "::error::Set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN as GitHub repository secrets before deploying from GitHub Actions."
+            exit 1
+          fi
+
+          if ! [[ "${CLOUDFLARE_ACCOUNT_ID}" =~ ^[A-Fa-f0-9]{32}$ ]]; then
+            echo "::error::CLOUDFLARE_ACCOUNT_ID must be the 32-character Cloudflare account ID."
+            exit 1
+          fi
+
+          if [[ "${CLOUDFLARE_API_TOKEN}" == Bearer* ]] || [[ "${CLOUDFLARE_API_TOKEN}" =~ [[:space:]] ]]; then
+            echo "::error::CLOUDFLARE_API_TOKEN must be the raw token value only. Do not include 'Bearer ', labels, spaces, or line breaks."
             exit 1
           fi
         env:
