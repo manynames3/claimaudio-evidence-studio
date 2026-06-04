@@ -876,12 +876,23 @@ export const useClaimAudioStore = create<ClaimAudioState>((set, get) => {
     startUploadedProjectProcessing: async (projectInput, file) => {
       const backendStatus = await get().ensureBackendStatus();
 
+      if (
+        backendStatus.backendMode !== "neon-aws" ||
+        backendStatus.auth.authProvider !== "pilot-cookie" ||
+        !backendStatus.auth.authConfigured ||
+        !backendStatus.auth.tenantIdConfigured
+      ) {
+        throw new Error(
+          "Real audio upload requires Neon/AWS backend mode, signed pilot sessions, and tenant-scoped storage. Use the sample statement until the confidential-file pilot backend is configured."
+        );
+      }
+
       if (!backendStatus.neonConfigured) {
-        return get().startMockProjectProcessing(projectInput, "uploaded", file.name);
+        throw new Error("Real audio upload requires Neon project storage. Use the sample statement until the pilot backend is configured.");
       }
 
       if (!backendStatus.awsConfigured) {
-        throw new Error("Real audio upload is not configured yet. Use the sample statement for this pilot workspace.");
+        throw new Error("Real audio upload requires AWS S3, KMS, and Amazon Transcribe configuration. Use the sample statement until AWS is configured.");
       }
 
       const { project, audioAsset, signedUpload } = await backendApi.createUploadedProject(projectInput, file);

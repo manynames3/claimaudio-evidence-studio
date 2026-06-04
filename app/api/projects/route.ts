@@ -135,6 +135,22 @@ export async function POST(request: NextRequest) {
 
       const backendStatus = getRuntimeBackendStatus();
 
+      if (
+        backendStatus.backendMode !== "neon-aws" ||
+        backendStatus.auth.authProvider !== "pilot-cookie" ||
+        !backendStatus.auth.authConfigured ||
+        !backendStatus.auth.tenantIdConfigured
+      ) {
+        return jsonError(
+          "Real recorded statement uploads require Neon/AWS backend mode, signed sessions, and a configured tenant ID.",
+          503,
+          {
+            backendMode: backendStatus.backendMode,
+            auth: backendStatus.auth
+          }
+        );
+      }
+
       if (!backendStatus.awsConfigured) {
         return jsonError(
           "AWS S3 upload is not configured for real recorded statement uploads. Use the sample statement or configure AWS upload/transcription services.",

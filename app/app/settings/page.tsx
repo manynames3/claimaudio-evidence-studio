@@ -1,6 +1,6 @@
 "use client";
 
-import { BellDot, Cloud, Database, KeyRound, LockKeyhole, ScrollText, Search, ShieldCheck, UserCog, Workflow } from "lucide-react";
+import { BellDot, Cloud, Database, KeyRound, LockKeyhole, ScrollText, Search, ShieldAlert, ShieldCheck, UserCog, Workflow } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AuditLogPanel } from "@/components/audit-log-panel";
 import { Badge } from "@/components/ui/badge";
@@ -80,6 +80,8 @@ export default function SettingsPage() {
       </div>
 
       <BackendStatusPanel status={backendStatus} />
+
+      <ConfidentialFileGate status={backendStatus} />
 
       <div className="grid gap-4 xl:grid-cols-2">
         {settings.map((item) => {
@@ -185,6 +187,7 @@ interface BackendHealthResponse {
 
 function BackendStatusPanel({ status }: { status?: BackendHealthResponse }) {
   const backend = status?.backend;
+  const signedAuthReady = Boolean(backend?.auth.authProvider === "pilot-cookie" && backend.auth.authConfigured);
   const items = [
     {
       label: "Backend mode",
@@ -193,8 +196,14 @@ function BackendStatusPanel({ status }: { status?: BackendHealthResponse }) {
     },
     {
       label: "Pilot auth",
-      value: backend?.auth.authConfigured ? "configured" : "demo defaults",
-      ready: Boolean(backend?.auth.authConfigured)
+      value: !backend
+        ? "checking"
+        : signedAuthReady
+          ? "signed sessions"
+          : backend.auth.authProvider === "disabled"
+            ? "disabled"
+            : "demo defaults",
+      ready: signedAuthReady
     },
     {
       label: "Supervisor code",
@@ -236,6 +245,76 @@ function BackendStatusPanel({ status }: { status?: BackendHealthResponse }) {
             </p>
           </div>
         ))}
+      </div>
+    </section>
+  );
+}
+
+function ConfidentialFileGate({ status }: { status?: BackendHealthResponse }) {
+  const backend = status?.backend;
+  const signedSessionReady = Boolean(backend?.auth.authProvider === "pilot-cookie" && backend.auth.authConfigured);
+  const tenantScopeReady = Boolean(backend?.auth.tenantIdConfigured);
+  const readyForControlledPilot = Boolean(
+    backend?.backendMode === "neon-aws" &&
+      signedSessionReady &&
+      tenantScopeReady &&
+      backend.neonConfigured &&
+      backend.awsConfigured
+  );
+  const gates = [
+    {
+      label: "Neon/AWS backend mode",
+      ready: Boolean(backend?.backendMode === "neon-aws")
+    },
+    {
+      label: "Signed pilot sessions",
+      ready: signedSessionReady
+    },
+    {
+      label: "Tenant scope",
+      ready: tenantScopeReady
+    },
+    {
+      label: "Persistent claim database",
+      ready: Boolean(backend?.neonConfigured)
+    },
+    {
+      label: "Encrypted upload and processing",
+      ready: Boolean(backend?.awsConfigured)
+    },
+    {
+      label: "Audit trail",
+      ready: Boolean(backend?.neonConfigured)
+    }
+  ];
+
+  return (
+    <section className="rounded-lg border bg-white p-5">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            {readyForControlledPilot ? (
+              <ShieldCheck className="h-4 w-4 text-emerald-700" />
+            ) : (
+              <ShieldAlert className="h-4 w-4 text-amber-700" />
+            )}
+            <h2 className="text-base font-semibold">Confidential File Gate</h2>
+            <Badge variant={readyForControlledPilot ? "success" : "warning"}>
+              {readyForControlledPilot ? "Controlled pilot ready" : "Sample-only until configured"}
+            </Badge>
+          </div>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+            Customer claim recordings should be uploaded only when signed sessions, tenant scoping, Neon persistence, AWS encrypted storage, and Transcribe processing are configured for this deployment.
+          </p>
+        </div>
+        <div className="grid min-w-[300px] gap-2">
+          {gates.map((gate) => (
+            <div key={gate.label} className="flex items-center justify-between gap-3 rounded-md border bg-slate-50 px-3 py-2">
+              <span className="text-sm text-slate-700">{gate.label}</span>
+              <Badge variant={gate.ready ? "success" : "warning"}>{gate.ready ? "Ready" : "Required"}</Badge>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );

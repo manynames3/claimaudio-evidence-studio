@@ -46,7 +46,7 @@ The sample-statement demo path uses a synthetic Amazon Polly recorded statement 
 - generates claim-file-style HTML evidence memo and contradiction report exports from reviewed evidence
 - records export generation and export download as separate audit events
 
-If Neon is configured but AWS is not, the UI disables real audio upload and keeps the sample statement available. This prevents creating claim records that cannot actually receive or transcribe audio.
+If Neon or AWS is not configured, the UI disables real audio upload and keeps the sample statement available. The app no longer creates fake uploaded projects, which prevents users from trusting a workflow that cannot actually receive, store, or transcribe their audio.
 
 TODO comments still mark where full SQS/Step Functions orchestration, production retries, real audio clipping, Cognito/Auth0 JWT validation, and claim-system integrations should plug in.
 

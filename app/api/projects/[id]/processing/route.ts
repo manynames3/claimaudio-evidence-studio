@@ -66,6 +66,18 @@ export async function POST(_request: Request, context: RouteContext) {
 
       const backendStatus = getRuntimeBackendStatus();
 
+      if (
+        backendStatus.backendMode !== "neon-aws" ||
+        backendStatus.auth.authProvider !== "pilot-cookie" ||
+        !backendStatus.auth.authConfigured ||
+        !backendStatus.auth.tenantIdConfigured
+      ) {
+        return jsonError("Real audio transcription requires Neon/AWS backend mode, signed sessions, and tenant scope.", 503, {
+          backendMode: backendStatus.backendMode,
+          auth: backendStatus.auth
+        });
+      }
+
       if (!backendStatus.awsConfigured) {
         return jsonError("AWS is not configured for real audio transcription.", 503, {
           missingEnv: backendStatus.missingAwsEnv

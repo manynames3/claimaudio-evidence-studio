@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FlaskConical, UploadCloud } from "lucide-react";
+import { CheckCircle2, FlaskConical, ShieldAlert, UploadCloud } from "lucide-react";
 import { ProcessingStepper } from "@/components/processing-stepper";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,10 +33,22 @@ export default function NewProjectPage() {
   const [processingProjectId, setProcessingProjectId] = useState<string>();
   const [isStarting, setIsStarting] = useState(false);
   const [uploadError, setUploadError] = useState<string>();
+  const [uploadAuthorized, setUploadAuthorized] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const processingRun = processingProjectId ? processingRuns[processingProjectId] : undefined;
   const isCheckingUploadReadiness = !backendStatus;
-  const realUploadUnavailable = Boolean(backendStatus?.neonConfigured && !backendStatus.awsConfigured);
+  const signedPilotSessionReady = Boolean(
+    backendStatus?.auth.authProvider === "pilot-cookie" && backendStatus.auth.authConfigured
+  );
+  const tenantScopeReady = Boolean(backendStatus?.auth.tenantIdConfigured);
+  const realUploadReady = Boolean(
+    backendStatus?.backendMode === "neon-aws" &&
+      backendStatus.neonConfigured &&
+      backendStatus.awsConfigured &&
+      signedPilotSessionReady &&
+      tenantScopeReady
+  );
+  const realUploadUnavailable = !realUploadReady;
 
   const projectInput = () => ({
       claimNumber: claimNumber.trim() === "AUTO-BI-" ? `AUTO-BI-${Math.floor(8000 + Math.random() * 900)}` : claimNumber,
@@ -65,6 +77,16 @@ export default function NewProjectPage() {
     setUploadError(undefined);
 
     try {
+      if (!realUploadReady) {
+        throw new Error(
+          "Real upload is available only when Neon, AWS processing, signed sessions, and tenant scope are configured for this deployment."
+        );
+      }
+
+      if (!uploadAuthorized) {
+        throw new Error("Confirm pilot authorization before uploading a recorded statement.");
+      }
+
       const extension = file.name.split(".").pop()?.toLowerCase() || "";
 
       if (!acceptedUploadExtensions.has(extension)) {
@@ -178,11 +200,17 @@ export default function NewProjectPage() {
               <Button
                 className="w-full"
                 variant="outline"
-                disabled={isStarting || Boolean(processingProjectId) || isCheckingUploadReadiness || realUploadUnavailable}
+                disabled={
+                  isStarting ||
+                  Boolean(processingProjectId) ||
+                  isCheckingUploadReadiness ||
+                  realUploadUnavailable ||
+                  !uploadAuthorized
+                }
                 onClick={() => fileInputRef.current?.click()}
               >
                 <UploadCloud className="h-4 w-4" />
-                {isCheckingUploadReadiness ? "Checking upload readiness" : "Upload audio"}
+                {isCheckingUploadReadiness ? "Checking upload readiness" : realUploadReady ? "Upload real statement" : "Upload unavailable"}
               </Button>
               <input
                 ref={fileInputRef}
@@ -205,14 +233,44 @@ export default function NewProjectPage() {
                 <FlaskConical className="h-4 w-4" />
                 Use sample statement
               </Button>
+              <label className="flex gap-2 rounded-md border bg-slate-50 p-3 text-xs leading-5 text-slate-700">
+                <input
+                  className="mt-0.5 h-4 w-4"
+                  type="checkbox"
+                  checked={uploadAuthorized}
+                  onChange={(event) => setUploadAuthorized(event.target.checked)}
+                />
+                <span>
+                  I am authorized to upload this pilot recorded statement and understand it will be stored and processed only when the confidential-file pilot backend is ready.
+                </span>
+              </label>
               <p className="text-xs leading-5 text-muted-foreground">
-                {realUploadUnavailable
-                  ? "Real uploads need AWS S3 and Transcribe configuration. Sample statements remain available for this pilot."
-                  : "Supported: mp3, m4a, wav, flac, ogg, webm, amr."}
+                {realUploadReady
+                  ? "Real uploads use signed sessions, tenant scope, signed S3 upload, KMS-encrypted storage, Amazon Transcribe, and optional Bedrock evidence extraction."
+                  : "Real uploads are disabled until Neon, signed sessions, tenant scope, and AWS S3/KMS/Transcribe are configured. Sample statements remain available."}
               </p>
               {uploadError && (
                 <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs leading-5 text-red-800">
                   {uploadError}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Pilot upload readiness</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              <ReadinessRow ready={Boolean(backendStatus?.neonConfigured)} label="Neon project database" />
+              <ReadinessRow ready={Boolean(backendStatus?.awsConfigured)} label="AWS S3/KMS/Transcribe" />
+              <ReadinessRow ready={signedPilotSessionReady} label="Signed pilot session" />
+              <ReadinessRow ready={tenantScopeReady} label="Tenant scope" />
+              <ReadinessRow ready={backendStatus?.backendMode === "neon-aws"} label="Neon/AWS backend mode" />
+              <ReadinessRow ready={uploadAuthorized} label="User upload authorization" />
+              {!realUploadReady && (
+                <p className="mt-3 rounded-md bg-amber-50 p-3 text-xs leading-5 text-amber-900">
+                  This deployment is safe for sample demos. Configure auth, tenant scope, Neon, AWS, and backend mode before accepting customer claim recordings.
                 </p>
               )}
             </CardContent>
@@ -229,6 +287,22 @@ export default function NewProjectPage() {
           </Link>
         </div>
       </div>
+    </div>
+  );
+}
+
+function ReadinessRow({ ready, label }: { ready: boolean; label: string }) {
+  const Icon = ready ? CheckCircle2 : ShieldAlert;
+
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-md border bg-white px-3 py-2">
+      <span className="flex items-center gap-2 text-slate-700">
+        <Icon className={ready ? "h-4 w-4 text-emerald-700" : "h-4 w-4 text-amber-700"} />
+        {label}
+      </span>
+      <span className={ready ? "text-xs font-medium text-emerald-800" : "text-xs font-medium text-amber-800"}>
+        {ready ? "Ready" : "Required"}
+      </span>
     </div>
   );
 }

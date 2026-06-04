@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { use, useEffect } from "react";
-import { ArrowLeft, FileArchive, FileText, ShieldCheck } from "lucide-react";
+import { ArrowLeft, CheckCircle2, FileArchive, FileText, ShieldCheck } from "lucide-react";
 import { ExportCard } from "@/components/export-card";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +21,7 @@ export default function ExportCenterPage({ params }: { params: Promise<{ id: str
     transcriptSegments,
     contradictions,
     clips,
+    exportMemos,
     loadProjectBundle,
     recordExportGenerated
   } = useClaimAudioStore();
@@ -114,6 +115,39 @@ export default function ExportCenterPage({ params }: { params: Promise<{ id: str
         </Card>
       </div>
 
+      <section className="rounded-lg border bg-white p-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-cyan-800" />
+              <h2 className="text-sm font-semibold text-slate-950">Claim-file export gates</h2>
+              <Badge variant={reviewedFindings.length ? "success" : "warning"}>
+                {reviewedFindings.length ? "Evidence ready" : "Review required"}
+              </Badge>
+              <Badge variant={project.reviewFlags.supervisorApproved ? "success" : "neutral"}>
+                {project.reviewFlags.supervisorApproved ? "Supervisor approved" : "Supervisor optional"}
+              </Badge>
+            </div>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+              Statement summary and evidence memo exports include only approved or edited findings. Contradiction reports include only approved contradiction pairs. Generation and download are audited when the backend is enabled.
+            </p>
+          </div>
+          <div className="grid min-w-[280px] gap-2 text-sm">
+            <ExportGateRow ready={reviewedFindings.length > 0} label="Reviewed findings" value={`${reviewedFindings.length}/${projectFindings.length}`} />
+            <ExportGateRow
+              ready={projectContradictions.length === 0 || reviewedContradictions.length > 0}
+              label="Reviewed contradictions"
+              value={`${reviewedContradictions.length}/${projectContradictions.length}`}
+            />
+            <ExportGateRow
+              ready={exportMemos.filter((memo) => memo.claimProjectId === project.id).length > 0}
+              label="Generated exports"
+              value={`${exportMemos.filter((memo) => memo.claimProjectId === project.id).length}`}
+            />
+          </div>
+        </div>
+      </section>
+
       <section className="rounded-lg border bg-white">
         <CardHeader className="border-b py-3">
           <CardTitle>Available exports</CardTitle>
@@ -165,6 +199,18 @@ export default function ExportCenterPage({ params }: { params: Promise<{ id: str
           ))}
         </div>
       </section>
+    </div>
+  );
+}
+
+function ExportGateRow({ ready, label, value }: { ready: boolean; label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-md border bg-slate-50 px-3 py-2">
+      <span className="flex items-center gap-2 text-slate-700">
+        <CheckCircle2 className={ready ? "h-4 w-4 text-emerald-700" : "h-4 w-4 text-amber-700"} />
+        {label}
+      </span>
+      <span className="text-xs font-semibold text-slate-950">{value}</span>
     </div>
   );
 }

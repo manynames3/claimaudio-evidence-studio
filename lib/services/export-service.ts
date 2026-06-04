@@ -72,9 +72,9 @@ export function buildMockExport(input: GenerateExportInput): GeneratedExport {
   return {
     exportType,
     title: "Supervisor Review Packet",
-    description: "Structured JSON packet with pending high-severity findings, contradictions, and clips.",
-    format: "JSON",
-    fileName: `${project.claimNumber}_supervisor_packet.json`,
+    description: "Claim-file review packet with evidence status, pending issues, contradictions, and saved clips.",
+    format: "HTML",
+    fileName: `${project.claimNumber}_supervisor_review_packet.html`,
     content: buildSupervisorPacket(project, input.findings, input.contradictions, input.clips)
   };
 }
@@ -97,6 +97,11 @@ function buildStatementSummary(project: ClaimProject, findings: EvidenceFinding[
     project,
     title: "Statement Summary",
     subtitle: "Neutral recorded-statement summary prepared from reviewer-approved evidence.",
+    metadata: [
+      { label: "Reviewed evidence", value: `${approved.length}` },
+      { label: "Pending high-priority items", value: `${pendingHigh.length}` },
+      { label: "Review status", value: project.reviewFlags.supervisorApproved ? "Supervisor approved" : "Human review required" }
+    ],
     body: `
       <section>
         <h2>Approved Evidence Themes</h2>
@@ -136,6 +141,11 @@ function buildEvidenceMemo(project: ClaimProject, findings: EvidenceFinding[]) {
     project,
     title: "Timestamped Evidence Memo",
     subtitle: "Reviewer-approved evidence with exact quote and timestamp support.",
+    metadata: [
+      { label: "Included evidence items", value: `${includedFindings.length}` },
+      { label: "Pending findings excluded", value: `${findings.filter((finding) => finding.reviewStatus === "pending").length}` },
+      { label: "Review status", value: project.reviewFlags.supervisorApproved ? "Supervisor approved" : "Reviewer approved only" }
+    ],
     body: `
       <section>
         <h2>Neutral Summary</h2>
@@ -160,6 +170,7 @@ function buildEvidenceMemo(project: ClaimProject, findings: EvidenceFinding[]) {
                     <dl>
                       <dt>Speaker</dt><dd>${escapeHtml(finding.speaker)}</dd>
                       <dt>Quote</dt><dd><blockquote>${escapeHtml(finding.exactQuote)}</blockquote></dd>
+                      <dt>Confidence</dt><dd>${escapeHtml(`${Math.round(finding.confidence * 100)}%`)} AI confidence; human review status: ${escapeHtml(finding.reviewStatus)}</dd>
                       <dt>Why it matters</dt><dd>${escapeHtml(finding.whyItMatters)}</dd>
                       <dt>Recommended follow-up</dt><dd>${escapeHtml(finding.recommendedFollowUp)}</dd>
                       <dt>Reviewer notes</dt><dd>${escapeHtml(finding.notes || "None")}</dd>
@@ -203,9 +214,11 @@ function buildClaimFileHtml(input: {
   project: ClaimProject;
   title: string;
   subtitle: string;
+  metadata?: Array<{ label: string; value: string }>;
   body: string;
 }) {
-  const { project, title, subtitle, body } = input;
+  const { project, title, subtitle, body, metadata = [] } = input;
+  const preparedAt = new Date().toISOString();
 
   return `<!doctype html>
 <html>
@@ -245,6 +258,10 @@ function buildClaimFileHtml(input: {
         <div><span class="label">Insured</span>${escapeHtml(project.insuredName)}</div>
         <div><span class="label">Loss date</span>${escapeHtml(project.lossDate)}</div>
         <div><span class="label">Claim type</span>${escapeHtml(project.claimType)}</div>
+        <div><span class="label">Prepared</span>${escapeHtml(preparedAt)}</div>
+        ${metadata
+          .map((item) => `<div><span class="label">${escapeHtml(item.label)}</span>${escapeHtml(item.value)}</div>`)
+          .join("")}
       </div>
       <p class="review-note">AI-assisted work product. Human review is required before claim-file reliance. No coverage, liability, or claim disposition conclusion is made by this export.</p>
     </header>
@@ -322,33 +339,89 @@ function buildSupervisorPacket(
   contradictions: Contradiction[],
   clips: EvidenceClip[]
 ) {
-  return JSON.stringify(
-    {
-      claimProject: {
-        claimNumber: project.claimNumber,
-        claimantName: project.claimantName,
-        insuredName: project.insuredName,
-        lossDate: project.lossDate,
-        claimType: project.claimType
-      },
-      pendingHighSeverityFindings: findings
-        .filter((finding) => finding.reviewStatus === "pending" && finding.severity === "high")
-        .map((finding) => ({
-          category: finding.category,
-          title: finding.title,
-          exactQuote: finding.exactQuote,
-          timestamp: formatTimeRange(finding.startTimeSeconds, finding.endTimeSeconds),
-          whyItMatters: finding.whyItMatters,
-          recommendedFollowUp: finding.recommendedFollowUp
-        })),
-      contradictions,
-      evidenceClips: clips.map((clip) => ({
-        title: clip.title,
-        timestamp: formatTimeRange(clip.startTimeSeconds, clip.endTimeSeconds),
-        transcriptExcerpt: clip.transcriptExcerpt
-      }))
-    },
-    null,
-    2
+  const reviewedFindings = findings.filter(
+    (finding) => finding.reviewStatus === "approved" || finding.reviewStatus === "edited"
   );
+  const pendingHighSeverityFindings = findings.filter(
+    (finding) => finding.reviewStatus === "pending" && finding.severity === "high"
+  );
+  const reviewedContradictions = contradictions.filter(
+    (contradiction) => contradiction.reviewStatus === "approved" || contradiction.reviewStatus === "edited"
+  );
+
+  return buildClaimFileHtml({
+    project,
+    title: "Supervisor Review Packet",
+    subtitle: "Human-review packet for approved evidence, open high-priority items, contradictions, and saved clips.",
+    metadata: [
+      { label: "Reviewed evidence", value: `${reviewedFindings.length}` },
+      { label: "Pending high severity", value: `${pendingHighSeverityFindings.length}` },
+      { label: "Reviewed contradictions", value: `${reviewedContradictions.length}` },
+      { label: "Evidence clips", value: `${clips.length}` }
+    ],
+    body: `
+      <section>
+        <h2>Packet Checklist</h2>
+        <ul>
+          <li>${escapeHtml(reviewedFindings.length ? "Reviewed evidence is available for supervisor review." : "No approved evidence items are available.")}</li>
+          <li>${escapeHtml(pendingHighSeverityFindings.length ? "High-severity pending findings remain open." : "No high-severity pending findings remain open.")}</li>
+          <li>${escapeHtml(contradictions.length ? `${reviewedContradictions.length} of ${contradictions.length} contradiction pairs have been reviewed.` : "No contradiction pairs are present.")}</li>
+          <li>${escapeHtml(clips.length ? `${clips.length} evidence clips are saved.` : "No evidence clips are saved yet.")}</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Reviewed Evidence</h2>
+        ${
+          reviewedFindings.length
+            ? reviewedFindings
+                .map(
+                  (finding) => `<article class="evidence-row">
+                    <div class="row-head">
+                      <span class="badge">${escapeHtml(finding.category)}</span>
+                      <strong>${escapeHtml(finding.title)}</strong>
+                      <span class="time">${escapeHtml(formatTimeRange(finding.startTimeSeconds, finding.endTimeSeconds))}</span>
+                    </div>
+                    <blockquote>${escapeHtml(finding.exactQuote)}</blockquote>
+                    <p><strong>Reviewer status:</strong> ${escapeHtml(finding.reviewStatus)} | <strong>Confidence:</strong> ${escapeHtml(`${Math.round(finding.confidence * 100)}%`)}</p>
+                    <p><strong>Follow-up:</strong> ${escapeHtml(finding.recommendedFollowUp)}</p>
+                  </article>`
+                )
+                .join("")
+            : `<p class="muted">No reviewed evidence has been approved or edited.</p>`
+        }
+      </section>
+      <section>
+        <h2>Open High-Severity Items</h2>
+        ${
+          pendingHighSeverityFindings.length
+            ? pendingHighSeverityFindings
+                .map(
+                  (finding) => `<article class="evidence-row">
+                    <div class="row-head">
+                      <span class="badge">${escapeHtml(finding.category)}</span>
+                      <strong>${escapeHtml(finding.title)}</strong>
+                      <span class="time">${escapeHtml(formatTimeRange(finding.startTimeSeconds, finding.endTimeSeconds))}</span>
+                    </div>
+                    <blockquote>${escapeHtml(finding.exactQuote)}</blockquote>
+                    <p>${escapeHtml(finding.whyItMatters)}</p>
+                  </article>`
+                )
+                .join("")
+            : `<p class="muted">No high-severity pending findings remain.</p>`
+        }
+      </section>
+      <section>
+        <h2>Evidence Clips</h2>
+        ${
+          clips.length
+            ? `<ul>${clips
+                .map(
+                  (clip) =>
+                    `<li><strong>${escapeHtml(clip.title)}</strong> <span class="time">${escapeHtml(formatTimeRange(clip.startTimeSeconds, clip.endTimeSeconds))}</span><br />${escapeHtml(clip.transcriptExcerpt)}</li>`
+                )
+                .join("")}</ul>`
+            : `<p class="muted">No evidence clips are saved yet.</p>`
+        }
+      </section>`
+  });
 }

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { use, useEffect } from "react";
 import { AlertTriangle, FileText, ShieldCheck } from "lucide-react";
+import { AnalysisValidationPanel } from "@/components/analysis-validation-panel";
 import { ContradictionCard } from "@/components/contradiction-card";
 import { DemoBanner } from "@/components/demo-banner";
 import { EvidenceClipList } from "@/components/evidence-clip-list";
@@ -155,6 +156,13 @@ export default function EvidenceWorkspacePage({ params }: { params: Promise<{ id
 
       <ValueMetricsStrip metrics={valueMetrics} />
 
+      <AnalysisValidationPanel
+        audioAsset={audioAsset}
+        transcriptSegments={projectSegments}
+        findings={projectFindings}
+        contradictions={projectContradictions}
+      />
+
       <section className="rounded-lg border bg-white p-4">
         <div className="flex flex-col justify-between gap-4 xl:flex-row xl:items-center">
           <div>
@@ -189,8 +197,11 @@ export default function EvidenceWorkspacePage({ params }: { params: Promise<{ id
       <SupervisorReviewPanel
         project={project}
         findings={projectFindings}
+        contradictions={projectContradictions}
+        clips={projectClips}
+        exportMemos={exportMemos.filter((item) => item.claimProjectId === project.id)}
         compact
-        onAction={(action) => void updateSupervisorReview(project.id, action)}
+        onAction={(action, note) => void updateSupervisorReview(project.id, action, note)}
       />
 
       <div className="grid gap-4 2xl:gap-5 xl:grid-cols-[270px_minmax(310px,1fr)_340px] 2xl:grid-cols-[360px_minmax(420px,1fr)_500px]">
