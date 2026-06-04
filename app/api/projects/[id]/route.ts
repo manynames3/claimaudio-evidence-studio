@@ -9,6 +9,7 @@ import {
   mockProjects,
   mockTranscriptSegments
 } from "@/lib/mock-data";
+import { withRangeServedDemoAudioAsset } from "@/lib/demo-audio/audio-url";
 import { jsonError, jsonOk, requireAuth } from "@/lib/server/api";
 import { getRuntimeBackendStatus } from "@/lib/server/env";
 
@@ -40,7 +41,7 @@ export async function GET(_request: Request, context: RouteContext) {
       mode: "mock-readonly",
       bundle: {
         project,
-        audioAsset: mockAudioAssets.find((asset) => asset.id === project.audioAssetId),
+        audioAsset: withRangeServedDemoAudioAsset(mockAudioAssets.find((asset) => asset.id === project.audioAssetId)),
         transcriptSegments: mockTranscriptSegments.filter((segment) => segment.audioAssetId === project.audioAssetId),
         findings: mockFindings.filter((finding) => finding.audioAssetId === project.audioAssetId),
         contradictions: mockContradictions.filter((contradiction) => contradiction.audioAssetId === project.audioAssetId),
@@ -62,7 +63,10 @@ export async function GET(_request: Request, context: RouteContext) {
     return jsonOk({
       backend: status,
       mode: "neon",
-      bundle
+      bundle: {
+        ...bundle,
+        audioAsset: withRangeServedDemoAudioAsset(bundle.audioAsset)
+      }
     });
   } catch (error) {
     return jsonError("Failed to load project from Neon.", 500, error instanceof Error ? error.message : error);

@@ -11,6 +11,7 @@ import {
 } from "@/lib/mock-data";
 import { storageService } from "@/lib/services";
 import { AwsStorageService } from "@/lib/services/aws";
+import { withRangeServedDemoAudioAssets } from "@/lib/demo-audio/audio-url";
 import { assertNeonConfigured, jsonError, jsonOk, requireAuth } from "@/lib/server/api";
 import { actorLabel, writableRoles } from "@/lib/server/auth";
 import { getRuntimeBackendStatus } from "@/lib/server/env";
@@ -60,7 +61,7 @@ export async function GET(request: NextRequest) {
     return jsonOk({
       backend: status,
       projects: mockProjects,
-      audioAssets: mockAudioAssets,
+      audioAssets: withRangeServedDemoAudioAssets(mockAudioAssets),
       findings: mockFindings,
       contradictions: mockContradictions,
       clips: mockEvidenceClips,
@@ -77,6 +78,7 @@ export async function GET(request: NextRequest) {
     return jsonOk({
       backend: status,
       ...dashboardData,
+      audioAssets: withRangeServedDemoAudioAssets(dashboardData.audioAssets),
       mode: "neon"
     });
   } catch (error) {

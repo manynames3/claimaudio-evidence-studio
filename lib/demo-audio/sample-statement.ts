@@ -1,4 +1,5 @@
 import timingData from "@/lib/demo-audio/polly-demo-timings.json";
+import { toRangeServedDemoAudioUrl } from "@/lib/demo-audio/audio-url";
 
 export interface SampleStatementTimingLine {
   id: string;
@@ -25,7 +26,7 @@ interface SampleStatementTimingData {
 
 const sampleStatementTimingData = timingData as SampleStatementTimingData;
 
-export const sampleStatementAudioUrl = sampleStatementTimingData.outputUrl;
+export const sampleStatementAudioUrl = toRangeServedDemoAudioUrl(sampleStatementTimingData.outputUrl);
 export const sampleStatementAudioDurationSeconds = Math.ceil(sampleStatementTimingData.durationSeconds);
 export const sampleStatementTimingLines = sampleStatementTimingData.lines;
 export const sampleStatementAudioProvider = sampleStatementTimingData.provider;
