@@ -32,6 +32,7 @@ export function WaveformPlayer({
   onCreateClip
 }: WaveformPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [mediaDurationSeconds, setMediaDurationSeconds] = useState<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const pendingSeekRef = useRef<number | null>(null);
   const audioSrc =
@@ -46,10 +47,50 @@ export function WaveformPlayer({
       }),
     []
   );
-  const clampTime = useCallback(
-    (seconds: number) => Math.min(audioAsset.durationSeconds, Math.max(0, seconds)),
-    [audioAsset.durationSeconds]
+  const getSeekDurationSeconds = useCallback(() => {
+    const mediaDuration = audioRef.current?.duration;
+
+    if (typeof mediaDuration === "number" && Number.isFinite(mediaDuration) && mediaDuration > 0) {
+      return mediaDuration;
+    }
+
+    if (mediaDurationSeconds && mediaDurationSeconds > 0) {
+      return mediaDurationSeconds;
+    }
+
+    if (audioAsset.durationSeconds > 0) {
+      return audioAsset.durationSeconds;
+    }
+
+    return null;
+  }, [audioAsset.durationSeconds, mediaDurationSeconds]);
+  const inferredDurationSeconds = useMemo(
+    () =>
+      Math.max(
+        0,
+        currentTimeSeconds,
+        selectedRange.endTimeSeconds,
+        ...findings.map((finding) => finding.endTimeSeconds)
+      ),
+    [currentTimeSeconds, findings, selectedRange.endTimeSeconds]
   );
+  const clampTime = useCallback(
+    (seconds: number) => {
+      const requestedTime = Math.max(0, seconds);
+      const durationSeconds = getSeekDurationSeconds();
+
+      return durationSeconds ? Math.min(durationSeconds, requestedTime) : requestedTime;
+    },
+    [getSeekDurationSeconds]
+  );
+  const displayDurationSeconds =
+    mediaDurationSeconds && mediaDurationSeconds > 0
+      ? mediaDurationSeconds
+      : audioAsset.durationSeconds > 0
+        ? audioAsset.durationSeconds
+        : inferredDurationSeconds > 0
+          ? inferredDurationSeconds
+          : 1;
   const seekAudioElement = useCallback(
     (seconds: number) => {
       const targetTime = clampTime(seconds);
@@ -154,19 +195,28 @@ export function WaveformPlayer({
     };
     const handleEnded = () => {
       setIsPlaying(false);
-      onTimeChange(audio.duration || audioAsset.durationSeconds);
+      onTimeChange(clampTime(audio.duration || displayDurationSeconds));
+    };
+    const handleDurationChange = () => {
+      if (Number.isFinite(audio.duration) && audio.duration > 0) {
+        setMediaDurationSeconds(audio.duration);
+      }
     };
 
     audio.addEventListener("timeupdate", handleTimeUpdate);
     audio.addEventListener("seeked", handleSeeked);
     audio.addEventListener("ended", handleEnded);
+    audio.addEventListener("durationchange", handleDurationChange);
+    audio.addEventListener("loadedmetadata", handleDurationChange);
 
     return () => {
       audio.removeEventListener("timeupdate", handleTimeUpdate);
       audio.removeEventListener("seeked", handleSeeked);
       audio.removeEventListener("ended", handleEnded);
+      audio.removeEventListener("durationchange", handleDurationChange);
+      audio.removeEventListener("loadedmetadata", handleDurationChange);
     };
-  }, [audioAsset.durationSeconds, audioSrc, onTimeChange]);
+  }, [audioSrc, clampTime, displayDurationSeconds, onTimeChange]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -212,11 +262,11 @@ export function WaveformPlayer({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [currentTimeSeconds, handleSeek, onCreateClip, togglePlayback]);
 
-  const progressPercent = secondsToPercent(currentTimeSeconds, audioAsset.durationSeconds);
-  const rangeLeft = secondsToPercent(selectedRange.startTimeSeconds, audioAsset.durationSeconds);
+  const progressPercent = secondsToPercent(currentTimeSeconds, displayDurationSeconds);
+  const rangeLeft = secondsToPercent(selectedRange.startTimeSeconds, displayDurationSeconds);
   const rangeWidth = Math.max(
     1,
-    secondsToPercent(selectedRange.endTimeSeconds - selectedRange.startTimeSeconds, audioAsset.durationSeconds)
+    secondsToPercent(selectedRange.endTimeSeconds - selectedRange.startTimeSeconds, displayDurationSeconds)
   );
 
   // TODO: Replace this mock waveform adapter with WaveSurfer.js or a real waveform service once S3 audio is available.
@@ -230,6 +280,10 @@ export function WaveformPlayer({
           onLoadedMetadata={(event) => {
             const audio = event.currentTarget;
             const targetTime = pendingSeekRef.current ?? currentTimeSeconds;
+
+            if (Number.isFinite(audio.duration) && audio.duration > 0) {
+              setMediaDurationSeconds(audio.duration);
+            }
 
             if (Math.abs(audio.currentTime - targetTime) > 0.4) {
               audio.currentTime = clampTime(targetTime);
@@ -246,7 +300,7 @@ export function WaveformPlayer({
           {audioSrc ? <Badge variant="info">Preloaded audio</Badge> : null}
           <Badge variant="success">Ready for review</Badge>
           <Timecode start={currentTimeSeconds} />
-          <span className="text-xs text-muted-foreground">/ {formatTimecode(audioAsset.durationSeconds)}</span>
+          <span className="text-xs text-muted-foreground">/ {formatTimecode(displayDurationSeconds)}</span>
         </div>
       </div>
       <div className="p-4">
@@ -254,7 +308,7 @@ export function WaveformPlayer({
           <div className="absolute left-3 right-3 top-3 flex justify-between text-[10px] font-medium text-slate-400">
             <span>0:00</span>
             <span>Evidence timeline</span>
-            <span>{formatTimecode(audioAsset.durationSeconds)}</span>
+            <span>{formatTimecode(displayDurationSeconds)}</span>
           </div>
           <div className="absolute inset-x-3 bottom-8 top-7 flex items-end gap-1">
             {bars.map((height, index) => {
@@ -283,7 +337,7 @@ export function WaveformPlayer({
               const rect = event.currentTarget.getBoundingClientRect();
               const clickPercent = rect.width > 0 ? (event.clientX - rect.left) / rect.width : 0;
 
-              handleSeek(clickPercent * audioAsset.durationSeconds);
+              handleSeek(clickPercent * displayDurationSeconds);
             }}
           />
           <div
@@ -295,7 +349,7 @@ export function WaveformPlayer({
             style={{ left: `${progressPercent}%` }}
           />
           {findings.map((finding) => {
-            const left = secondsToPercent(finding.startTimeSeconds, audioAsset.durationSeconds);
+            const left = secondsToPercent(finding.startTimeSeconds, displayDurationSeconds);
 
             return (
               <button
