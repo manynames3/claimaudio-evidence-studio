@@ -19,6 +19,9 @@ interface ContradictionCardProps {
 }
 
 export function ContradictionCard({ projectId, contradiction, onJump, onStatusChange }: ContradictionCardProps) {
+  const jumpToStatementA = () => onJump(contradiction.timestampA);
+  const jumpToStatementB = () => onJump(contradiction.timestampB);
+
   return (
     <article className="rounded-md border bg-white p-4" data-testid={`contradiction-card-${contradiction.id}`}>
       <div className="flex items-start justify-between gap-3">
@@ -36,7 +39,18 @@ export function ContradictionCard({ projectId, contradiction, onJump, onStatusCh
           <Badge variant="neutral">Statement A</Badge>
           <p className="mt-2 text-sm leading-6 text-slate-700">{contradiction.statementA}</p>
           <blockquote className="mt-2 text-sm italic text-slate-800">"{contradiction.quoteA}"</blockquote>
-          <Button className="mt-3" size="sm" variant="outline" onClick={() => onJump(contradiction.timestampA)}>
+          <Button
+            className="mt-3"
+            size="sm"
+            variant="outline"
+            type="button"
+            onPointerDown={(event) => {
+              if (event.button === 0) {
+                jumpToStatementA();
+              }
+            }}
+            onClick={jumpToStatementA}
+          >
             Jump to <Timecode start={contradiction.timestampA} />
           </Button>
         </div>
@@ -44,7 +58,18 @@ export function ContradictionCard({ projectId, contradiction, onJump, onStatusCh
           <Badge variant="neutral">Statement B</Badge>
           <p className="mt-2 text-sm leading-6 text-slate-700">{contradiction.statementB}</p>
           <blockquote className="mt-2 text-sm italic text-slate-800">"{contradiction.quoteB}"</blockquote>
-          <Button className="mt-3" size="sm" variant="outline" onClick={() => onJump(contradiction.timestampB)}>
+          <Button
+            className="mt-3"
+            size="sm"
+            variant="outline"
+            type="button"
+            onPointerDown={(event) => {
+              if (event.button === 0) {
+                jumpToStatementB();
+              }
+            }}
+            onClick={jumpToStatementB}
+          >
             Jump to <Timecode start={contradiction.timestampB} />
           </Button>
         </div>

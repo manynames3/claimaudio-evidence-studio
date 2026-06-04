@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FileText, Search } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +24,28 @@ export function TranscriptPanel({
 }: TranscriptPanelProps) {
   const [search, setSearch] = useState("");
   const [speaker, setSpeaker] = useState("all");
+  const segmentListRef = useRef<HTMLDivElement | null>(null);
   const speakers = useMemo(() => Array.from(new Set(segments.map((segment) => segment.speaker))), [segments]);
+  const segmentLookup = useMemo(
+    () => new Map(segments.map((segment) => [segment.id, segment])),
+    [segments]
+  );
+  const selectSegmentFromTarget = useCallback(
+    (target: EventTarget | null) => {
+      if (!(target instanceof Element)) {
+        return;
+      }
+
+      const segmentButton = target.closest<HTMLButtonElement>("[data-transcript-segment-id]");
+      const segmentId = segmentButton?.dataset.transcriptSegmentId;
+      const segment = segmentId ? segmentLookup.get(segmentId) : undefined;
+
+      if (segment) {
+        onSelectSegment(segment);
+      }
+    },
+    [onSelectSegment, segmentLookup]
+  );
 
   const filteredSegments = segments.filter((segment) => {
     const matchesSearch = segment.text.toLowerCase().includes(search.toLowerCase());
@@ -32,6 +53,26 @@ export function TranscriptPanel({
 
     return matchesSearch && matchesSpeaker;
   });
+
+  useEffect(() => {
+    const segmentList = segmentListRef.current;
+
+    if (!segmentList) {
+      return;
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (event.button !== 0) {
+        return;
+      }
+
+      selectSegmentFromTarget(event.target);
+    };
+
+    segmentList.addEventListener("pointerdown", handlePointerDown);
+
+    return () => segmentList.removeEventListener("pointerdown", handlePointerDown);
+  }, [selectSegmentFromTarget]);
 
   return (
     <section className="flex h-full min-h-[650px] flex-col rounded-lg border bg-white">
@@ -75,7 +116,7 @@ export function TranscriptPanel({
             description="Clear the search or speaker filter to return to the full recorded statement."
           />
         ) : (
-          <div className="space-y-2">
+          <div ref={segmentListRef} className="space-y-2">
             {filteredSegments.map((segment) => {
             const active =
               selectedSegmentId === segment.id ||
@@ -84,7 +125,9 @@ export function TranscriptPanel({
 
             return (
               <button
+                type="button"
                 key={segment.id}
+                data-transcript-segment-id={segment.id}
                 onClick={() => onSelectSegment(segment)}
                 className={cn(
                   "w-full rounded-md border p-3 text-left transition-colors hover:border-cyan-700 hover:bg-cyan-50/50",

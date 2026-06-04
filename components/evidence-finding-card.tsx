@@ -66,6 +66,7 @@ export function EvidenceFindingCard({
     });
     setOpen(false);
   };
+  const jumpToFinding = () => onJump(finding);
 
   return (
     <article
@@ -123,7 +124,18 @@ export function EvidenceFindingCard({
         </p>
       )}
       <div className="mt-4 space-y-2">
-        <Button className="w-full" variant="outline" size="sm" onClick={() => onJump(finding)}>
+        <Button
+          className="w-full"
+          variant="outline"
+          size="sm"
+          type="button"
+          onPointerDown={(event) => {
+            if (event.button === 0) {
+              jumpToFinding();
+            }
+          }}
+          onClick={jumpToFinding}
+        >
           <Headphones className="h-3.5 w-3.5" />
           Jump to audio
         </Button>

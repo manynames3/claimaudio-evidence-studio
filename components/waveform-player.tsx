@@ -34,6 +34,7 @@ export function WaveformPlayer({
   const [isPlaying, setIsPlaying] = useState(false);
   const [mediaDurationSeconds, setMediaDurationSeconds] = useState<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const waveformSeekRef = useRef<HTMLButtonElement | null>(null);
   const pendingSeekRef = useRef<number | null>(null);
   const audioSrc =
     audioAsset.storageUrl?.startsWith("/") || audioAsset.storageUrl?.startsWith("https://")
@@ -127,6 +128,15 @@ export function WaveformPlayer({
       onTimeChange(targetTime);
     },
     [onTimeChange, seekAudioElement]
+  );
+  const seekFromWaveformClientX = useCallback(
+    (clientX: number, element: HTMLElement) => {
+      const rect = element.getBoundingClientRect();
+      const clickPercent = rect.width > 0 ? (clientX - rect.left) / rect.width : 0;
+
+      handleSeek(clickPercent * displayDurationSeconds);
+    },
+    [displayDurationSeconds, handleSeek]
   );
   const togglePlayback = useCallback(() => {
     const audio = audioRef.current;
@@ -231,6 +241,26 @@ export function WaveformPlayer({
   }, [audioSrc, currentTimeSeconds, seekAudioElement]);
 
   useEffect(() => {
+    const waveformSeekButton = waveformSeekRef.current;
+
+    if (!waveformSeekButton) {
+      return;
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (event.button !== 0) {
+        return;
+      }
+
+      seekFromWaveformClientX(event.clientX, waveformSeekButton);
+    };
+
+    waveformSeekButton.addEventListener("pointerdown", handlePointerDown);
+
+    return () => waveformSeekButton.removeEventListener("pointerdown", handlePointerDown);
+  }, [seekFromWaveformClientX]);
+
+  useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       const tagName = target?.tagName.toLowerCase();
@@ -328,16 +358,14 @@ export function WaveformPlayer({
             })}
           </div>
           <button
+            ref={waveformSeekRef}
             type="button"
             aria-label="Seek waveform"
             data-testid="waveform-seek-hit-area"
             title="Click waveform to seek"
             className="absolute inset-x-3 bottom-8 top-7 z-10 cursor-pointer appearance-none rounded-sm border-0 bg-transparent p-0 focus:outline-none focus:ring-2 focus:ring-cyan-300"
             onClick={(event) => {
-              const rect = event.currentTarget.getBoundingClientRect();
-              const clickPercent = rect.width > 0 ? (event.clientX - rect.left) / rect.width : 0;
-
-              handleSeek(clickPercent * displayDurationSeconds);
+              seekFromWaveformClientX(event.clientX, event.currentTarget);
             }}
           />
           <div
