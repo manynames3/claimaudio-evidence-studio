@@ -41,6 +41,8 @@ export function SupervisorReviewPanel({
   const isReturned = Boolean(project.reviewFlags.supervisorReturned);
   const canSupervisorReview =
     user?.role === "supervisor" || user?.role === "defense_attorney" || user?.role === "admin";
+  const reviewerRole = user?.role ? user.role.replace("_", " ") : "pilot reviewer";
+  const packetState = isApproved ? "Approved for export" : isReturned ? "Returned to reviewer" : isSubmitted ? "Submitted for decision" : "Reviewer drafting";
   const checklist = [
     {
       label: "Reviewed evidence items",
@@ -134,6 +136,16 @@ export function SupervisorReviewPanel({
           </Button>
         </div>
       </div>
+      <div className="mt-4 grid gap-2 md:grid-cols-4">
+        <PacketState label="Packet state" value={packetState} ready={isApproved || isSubmitted} />
+        <PacketState label="Reviewer role" value={reviewerRole} ready={Boolean(user)} />
+        <PacketState
+          label="Decision authority"
+          value={canSupervisorReview ? "Can approve/return" : "Submit only"}
+          ready={canSupervisorReview}
+        />
+        <PacketState label="Audit trail" value="Action logged" ready />
+      </div>
       <div className="mt-4 grid gap-2 md:grid-cols-5">
         {checklist.map((item) => (
           <div key={item.label} className="rounded-md border bg-slate-50 p-3">
@@ -169,5 +181,17 @@ export function SupervisorReviewPanel({
         </p>
       )}
     </section>
+  );
+}
+
+function PacketState({ label, value, ready }: { label: string; value: string; ready: boolean }) {
+  return (
+    <div className="rounded-md border bg-slate-50 p-3">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-xs font-medium uppercase text-muted-foreground">{label}</span>
+        <Badge variant={ready ? "success" : "neutral"}>{ready ? "Active" : "Open"}</Badge>
+      </div>
+      <p className="mt-2 text-sm font-semibold text-slate-950">{value}</p>
+    </div>
   );
 }

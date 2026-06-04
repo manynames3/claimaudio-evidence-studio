@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, Eye } from "lucide-react";
+import { Download, Eye, FileCheck2, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -161,6 +161,16 @@ export function ExportCard({
         </div>
         <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">{format}</span>
       </div>
+      <div className="mt-4 grid gap-2 rounded-md border bg-slate-50 p-3 text-xs leading-5 text-slate-700">
+        <div className="flex items-center gap-2">
+          <FileCheck2 className="h-3.5 w-3.5 text-cyan-800" />
+          <span className="font-medium">Claim-file work product preview</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="h-3.5 w-3.5 text-emerald-700" />
+          <span>Includes human-review gates and audit-ready generation/download tracking.</span>
+        </div>
+      </div>
       <div className="mt-5 grid grid-cols-2 gap-2">
         <Dialog onOpenChange={(open) => open && void runGenerate()}>
           <DialogTrigger asChild>
@@ -169,20 +179,34 @@ export function ExportCard({
               {isGenerating ? "Generating" : "Preview"}
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl">
+          <DialogContent className="max-w-5xl">
             <DialogHeader>
               <DialogTitle>{title}</DialogTitle>
               <DialogDescription>{description}</DialogDescription>
             </DialogHeader>
+            <div className="grid gap-2 rounded-md border bg-slate-50 p-3 text-xs text-slate-700 md:grid-cols-3">
+              <div>
+                <span className="block font-medium uppercase text-muted-foreground">File name</span>
+                <span className="mt-1 block truncate font-semibold text-slate-950">{generated.fileName}</span>
+              </div>
+              <div>
+                <span className="block font-medium uppercase text-muted-foreground">Format</span>
+                <span className="mt-1 block font-semibold text-slate-950">{generated.format}</span>
+              </div>
+              <div>
+                <span className="block font-medium uppercase text-muted-foreground">Use condition</span>
+                <span className="mt-1 block font-semibold text-slate-950">Human review required</span>
+              </div>
+            </div>
             {error && <p className="rounded-md bg-red-50 p-3 text-sm text-red-800">{error}</p>}
             {generated.format === "HTML" ? (
               <iframe
-                className="h-[58vh] w-full rounded-md border bg-white"
+                className="h-[62vh] w-full rounded-md border bg-white"
                 srcDoc={generated.content}
                 title={`${title} preview`}
               />
             ) : (
-              <pre className="claims-scrollbar max-h-[58vh] overflow-auto rounded-md bg-slate-950 p-4 text-sm leading-6 text-slate-100">
+              <pre className="claims-scrollbar max-h-[62vh] overflow-auto rounded-md bg-slate-950 p-4 text-sm leading-6 text-slate-100">
                 {generated.content}
               </pre>
             )}

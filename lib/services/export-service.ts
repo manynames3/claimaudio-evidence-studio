@@ -229,10 +229,12 @@ function buildClaimFileHtml(input: {
     body { margin: 0; background: #f8fafc; color: #0f172a; font-family: Arial, sans-serif; line-height: 1.5; }
     main { max-width: 960px; margin: 0 auto; padding: 32px; }
     header, section { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin-bottom: 16px; }
+    header { border-top: 5px solid #155e75; }
     h1 { margin: 0; font-size: 24px; letter-spacing: 0; }
     h2 { margin: 0 0 12px; font-size: 15px; text-transform: uppercase; color: #334155; letter-spacing: 0; }
     p, li, dd { font-size: 14px; }
     .subtitle, .muted, .review-note { color: #475569; }
+    .document-label { color: #155e75; font-size: 12px; font-weight: 700; letter-spacing: .04em; margin-bottom: 6px; text-transform: uppercase; }
     .claim-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }
     .claim-grid div { border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; background: #f8fafc; }
     .label { display: block; color: #64748b; font-size: 11px; text-transform: uppercase; margin-bottom: 4px; }
@@ -251,6 +253,7 @@ function buildClaimFileHtml(input: {
 <body>
   <main>
     <header>
+      <div class="document-label">ClaimAudio Evidence Studio | Claim-file work product</div>
       <h1>${escapeHtml(title)} - ${escapeHtml(project.claimNumber)}</h1>
       <p class="subtitle">${escapeHtml(subtitle)}</p>
       <div class="claim-grid">
@@ -281,45 +284,39 @@ function escapeHtml(value: unknown) {
 }
 
 function buildContradictionHtml(project: ClaimProject, contradictions: Contradiction[]) {
-  const rows = contradictions
-    .map(
-      (contradiction) => `<section>
-  <h2>${escapeHtml(contradiction.title)}</h2>
-  <p><strong>Why it matters:</strong> ${escapeHtml(contradiction.whyItMatters)}</p>
-  <p><strong>Statement A:</strong> ${escapeHtml(contradiction.statementA)}</p>
-  <blockquote>${escapeHtml(contradiction.quoteA)} (${escapeHtml(formatTimeRange(contradiction.timestampA, contradiction.timestampA + 8))})</blockquote>
-  <p><strong>Statement B:</strong> ${escapeHtml(contradiction.statementB)}</p>
-  <blockquote>${escapeHtml(contradiction.quoteB)} (${escapeHtml(formatTimeRange(contradiction.timestampB, contradiction.timestampB + 8))})</blockquote>
-</section>`
-    )
-    .join("\n");
-
-  return `<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <title>${escapeHtml(project.claimNumber)} Contradiction Report</title>
-  <style>
-    body { font-family: Arial, sans-serif; color: #0f172a; line-height: 1.5; margin: 32px; background: #f8fafc; }
-    main { max-width: 920px; margin: 0 auto; }
-    header { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin-bottom: 16px; }
-    section { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
-    h1 { margin: 0; font-size: 22px; }
-    h2 { margin-top: 0; font-size: 16px; }
-    .note { color: #475569; font-size: 13px; }
-    blockquote { border-left: 4px solid #155e75; margin-left: 0; padding-left: 12px; color: #334155; background: #f8fafc; padding-top: 8px; padding-bottom: 8px; }
-  </style>
-</head>
-<body>
-  <main>
-    <header>
-      <h1>Contradiction Report - ${escapeHtml(project.claimNumber)}</h1>
-      <p class="note">Potential inconsistencies only. No final coverage, liability, or claim disposition conclusion is made. Human review is required.</p>
-    </header>
-    ${rows || "<section><h2>No contradictions detected</h2><p>No quote-supported contradiction pairs are available for this statement.</p></section>"}
-  </main>
-</body>
-</html>`;
+  return buildClaimFileHtml({
+    project,
+    title: "Contradiction Report",
+    subtitle:
+      "Quote-paired potential inconsistencies for human review. No fraud, liability, coverage, or disposition conclusion is made.",
+    metadata: [
+      { label: "Reviewed contradiction pairs", value: `${contradictions.length}` },
+      { label: "Review status", value: project.reviewFlags.supervisorApproved ? "Supervisor approved" : "Human review required" }
+    ],
+    body:
+      contradictions.length > 0
+        ? `<section>
+            <h2>Reviewed Potential Inconsistencies</h2>
+            ${contradictions
+              .map(
+                (contradiction) => `<article class="evidence-row">
+                  <div class="row-head">
+                    <span class="badge">Potential inconsistency</span>
+                    <strong>${escapeHtml(contradiction.title)}</strong>
+                  </div>
+                  <dl>
+                    <dt>Why it matters</dt><dd>${escapeHtml(contradiction.whyItMatters)}</dd>
+                    <dt>Statement A</dt><dd>${escapeHtml(contradiction.statementA)}</dd>
+                    <dt>Quote A</dt><dd><blockquote>${escapeHtml(contradiction.quoteA)} <span class="time">${escapeHtml(formatTimeRange(contradiction.timestampA, contradiction.timestampA + 8))}</span></blockquote></dd>
+                    <dt>Statement B</dt><dd>${escapeHtml(contradiction.statementB)}</dd>
+                    <dt>Quote B</dt><dd><blockquote>${escapeHtml(contradiction.quoteB)} <span class="time">${escapeHtml(formatTimeRange(contradiction.timestampB, contradiction.timestampB + 8))}</span></blockquote></dd>
+                  </dl>
+                </article>`
+              )
+              .join("")}
+          </section>`
+        : `<section><h2>No Quote-Supported Contradictions</h2><p class="muted">No reviewed contradiction pairs are available for this statement.</p></section>`
+  });
 }
 
 function buildTranscript(project: ClaimProject, segments: TranscriptSegment[]) {

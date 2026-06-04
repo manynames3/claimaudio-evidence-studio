@@ -33,6 +33,7 @@ export function AnalysisValidationPanel({
   const averageTranscriptConfidence = average(transcriptSegments.map((segment) => segment.confidence));
   const averageFindingConfidence = average(findings.map((finding) => finding.confidence));
   const validationComplete = findings.length > 0 && quoteBackedFindings.length === findings.length;
+  const unsupportedFindings = findings.length - quoteBackedFindings.length;
 
   return (
     <section className="rounded-lg border bg-white p-4">
@@ -47,15 +48,18 @@ export function AnalysisValidationPanel({
             <Badge variant="neutral">{audioAsset.sourceType === "uploaded" ? "Uploaded file" : "Sample file"}</Badge>
           </div>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-            Findings are only useful if users can verify the source. This panel shows whether each AI item has exact quote, timestamp, transcript link, and confidence support before export.
+            Findings are only useful if users can verify the source. This panel checks exact quote, timestamp, transcript link, and confidence support before users rely on AI output.
           </p>
         </div>
         <div className="rounded-md border bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-700">
-          Human approval remains required. ClaimAudio does not make fraud, liability, coverage, or denial conclusions.
+          {unsupportedFindings > 0
+            ? `${unsupportedFindings} unsupported item${unsupportedFindings === 1 ? "" : "s"} should be excluded from export.`
+            : "All visible findings have source support."}{" "}
+          Human approval remains required.
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
         <ValidationMetric
           icon={Quote}
           label="Quote + timestamp support"
@@ -69,6 +73,13 @@ export function AnalysisValidationPanel({
           value={formatPercent(averageTranscriptConfidence)}
           helper={`${transcriptSegments.length} timestamped segments`}
           ready={averageTranscriptConfidence >= 0.85}
+        />
+        <ValidationMetric
+          icon={ShieldCheck}
+          label="Exportable findings"
+          value={`${quoteBackedFindings.length}`}
+          helper="Unsupported AI items are withheld from claim-file reliance."
+          ready={unsupportedFindings === 0}
         />
         <ValidationMetric
           icon={Link2}
