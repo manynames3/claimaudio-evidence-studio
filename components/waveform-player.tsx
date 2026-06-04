@@ -33,6 +33,7 @@ export function WaveformPlayer({
 }: WaveformPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const pendingSeekRef = useRef<number | null>(null);
   const audioSrc =
     audioAsset.storageUrl?.startsWith("/") || audioAsset.storageUrl?.startsWith("https://")
       ? audioAsset.storageUrl
@@ -44,6 +45,47 @@ export function WaveformPlayer({
         return Math.round(Math.max(18, Math.min(88, 48 + wave + ((index * 13) % 19))));
       }),
     []
+  );
+  const clampTime = useCallback(
+    (seconds: number) => Math.min(audioAsset.durationSeconds, Math.max(0, seconds)),
+    [audioAsset.durationSeconds]
+  );
+  const seekAudioElement = useCallback(
+    (seconds: number) => {
+      const targetTime = clampTime(seconds);
+      const audio = audioRef.current;
+
+      pendingSeekRef.current = targetTime;
+
+      if (!audio || !audioSrc) {
+        return targetTime;
+      }
+
+      const applySeek = () => {
+        try {
+          audio.currentTime = targetTime;
+        } catch {
+          // The loadedmetadata handler will retry if the browser is not ready to seek yet.
+        }
+      };
+
+      if (audio.readyState >= HTMLMediaElement.HAVE_METADATA) {
+        applySeek();
+      } else {
+        audio.addEventListener("loadedmetadata", applySeek, { once: true });
+      }
+
+      return targetTime;
+    },
+    [audioSrc, clampTime]
+  );
+  const handleSeek = useCallback(
+    (seconds: number) => {
+      const targetTime = seekAudioElement(seconds);
+
+      onTimeChange(targetTime);
+    },
+    [onTimeChange, seekAudioElement]
   );
   const togglePlayback = useCallback(() => {
     const audio = audioRef.current;
@@ -59,11 +101,13 @@ export function WaveformPlayer({
       return;
     }
 
+    seekAudioElement(currentTimeSeconds);
+
     void audio
       .play()
       .then(() => setIsPlaying(true))
       .catch(() => setIsPlaying(false));
-  }, [audioSrc, isPlaying]);
+  }, [audioSrc, currentTimeSeconds, isPlaying, seekAudioElement]);
 
   useEffect(() => {
     if (audioSrc) {
@@ -95,6 +139,17 @@ export function WaveformPlayer({
     }
 
     const handleTimeUpdate = () => {
+      const pendingSeek = pendingSeekRef.current;
+
+      if (pendingSeek !== null && Math.abs(audio.currentTime - pendingSeek) > 0.35) {
+        return;
+      }
+
+      pendingSeekRef.current = null;
+      onTimeChange(audio.currentTime);
+    };
+    const handleSeeked = () => {
+      pendingSeekRef.current = null;
       onTimeChange(audio.currentTime);
     };
     const handleEnded = () => {
@@ -103,10 +158,12 @@ export function WaveformPlayer({
     };
 
     audio.addEventListener("timeupdate", handleTimeUpdate);
+    audio.addEventListener("seeked", handleSeeked);
     audio.addEventListener("ended", handleEnded);
 
     return () => {
       audio.removeEventListener("timeupdate", handleTimeUpdate);
+      audio.removeEventListener("seeked", handleSeeked);
       audio.removeEventListener("ended", handleEnded);
     };
   }, [audioAsset.durationSeconds, audioSrc, onTimeChange]);
@@ -119,9 +176,9 @@ export function WaveformPlayer({
     }
 
     if (Math.abs(audio.currentTime - currentTimeSeconds) > 0.4) {
-      audio.currentTime = Math.min(audio.duration || audioAsset.durationSeconds, Math.max(0, currentTimeSeconds));
+      seekAudioElement(currentTimeSeconds);
     }
-  }, [audioAsset.durationSeconds, audioSrc, currentTimeSeconds]);
+  }, [audioSrc, currentTimeSeconds, seekAudioElement]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -138,11 +195,11 @@ export function WaveformPlayer({
       }
 
       if (event.key.toLowerCase() === "j") {
-        onTimeChange(Math.max(0, currentTimeSeconds - 10));
+        handleSeek(currentTimeSeconds - 10);
       }
 
       if (event.key.toLowerCase() === "l") {
-        onTimeChange(Math.min(audioAsset.durationSeconds, currentTimeSeconds + 10));
+        handleSeek(currentTimeSeconds + 10);
       }
 
       if (event.key.toLowerCase() === "c") {
@@ -153,7 +210,7 @@ export function WaveformPlayer({
     window.addEventListener("keydown", handleKeyDown);
 
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [audioAsset.durationSeconds, currentTimeSeconds, onCreateClip, onTimeChange, togglePlayback]);
+  }, [currentTimeSeconds, handleSeek, onCreateClip, togglePlayback]);
 
   const progressPercent = secondsToPercent(currentTimeSeconds, audioAsset.durationSeconds);
   const rangeLeft = secondsToPercent(selectedRange.startTimeSeconds, audioAsset.durationSeconds);
@@ -172,9 +229,10 @@ export function WaveformPlayer({
           preload="metadata"
           onLoadedMetadata={(event) => {
             const audio = event.currentTarget;
+            const targetTime = pendingSeekRef.current ?? currentTimeSeconds;
 
-            if (Math.abs(audio.currentTime - currentTimeSeconds) > 0.4) {
-              audio.currentTime = Math.min(audio.duration || audioAsset.durationSeconds, currentTimeSeconds);
+            if (Math.abs(audio.currentTime - targetTime) > 0.4) {
+              audio.currentTime = clampTime(targetTime);
             }
           }}
         />
@@ -204,25 +262,36 @@ export function WaveformPlayer({
               const played = barPercent <= progressPercent;
 
               return (
-                <button
+                <div
                   key={index}
-                  title={`Seek to ${formatTimecode((barPercent / 100) * audioAsset.durationSeconds)}`}
-                  onClick={() => onTimeChange((barPercent / 100) * audioAsset.durationSeconds)}
                   className={cn(
                     "flex-1 rounded-sm transition-colors",
-                    played ? "bg-cyan-300" : "bg-slate-600 hover:bg-slate-500"
+                    played ? "bg-cyan-300" : "bg-slate-600"
                   )}
                   style={{ height: `${height}%` }}
                 />
               );
             })}
           </div>
+          <button
+            type="button"
+            aria-label="Seek waveform"
+            data-testid="waveform-seek-hit-area"
+            title="Click waveform to seek"
+            className="absolute inset-x-3 bottom-8 top-7 z-10 cursor-pointer appearance-none rounded-sm border-0 bg-transparent p-0 focus:outline-none focus:ring-2 focus:ring-cyan-300"
+            onClick={(event) => {
+              const rect = event.currentTarget.getBoundingClientRect();
+              const clickPercent = rect.width > 0 ? (event.clientX - rect.left) / rect.width : 0;
+
+              handleSeek(clickPercent * audioAsset.durationSeconds);
+            }}
+          />
           <div
-            className="absolute top-7 h-[calc(100%-3.5rem)] rounded-sm bg-amber-300/20 ring-1 ring-amber-200"
+            className="pointer-events-none absolute top-7 h-[calc(100%-3.5rem)] rounded-sm bg-amber-300/20 ring-1 ring-amber-200"
             style={{ left: `${rangeLeft}%`, width: `${rangeWidth}%` }}
           />
           <div
-            className="absolute top-6 h-[calc(100%-3rem)] w-0.5 bg-white shadow"
+            className="pointer-events-none absolute top-6 h-[calc(100%-3rem)] w-0.5 bg-white shadow"
             style={{ left: `${progressPercent}%` }}
           />
           {findings.map((finding) => {
@@ -256,7 +325,7 @@ export function WaveformPlayer({
               size="icon"
               variant="outline"
               title="Back 10 seconds"
-              onClick={() => onTimeChange(Math.max(0, currentTimeSeconds - 10))}
+              onClick={() => handleSeek(currentTimeSeconds - 10)}
             >
               <StepBack className="h-4 w-4" />
             </Button>
@@ -267,7 +336,7 @@ export function WaveformPlayer({
               size="icon"
               variant="outline"
               title="Forward 10 seconds"
-              onClick={() => onTimeChange(Math.min(audioAsset.durationSeconds, currentTimeSeconds + 10))}
+              onClick={() => handleSeek(currentTimeSeconds + 10)}
             >
               <StepForward className="h-4 w-4" />
             </Button>
