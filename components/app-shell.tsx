@@ -75,8 +75,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <aside className="fixed inset-y-0 left-0 hidden w-56 border-r bg-white lg:block">
-        <nav className="space-y-1 px-3 py-4">
+      <aside className="fixed inset-y-0 left-0 hidden w-56 flex-col border-r bg-white lg:flex">
+        <nav className="flex-1 space-y-1 px-3 py-4">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
@@ -96,6 +96,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             );
           })}
         </nav>
+        <div className="border-t px-3 py-3 text-[10px] font-medium uppercase leading-4 tracking-wide text-muted-foreground">
+          ©2026 SUPREME AI VENTURES LLC
+        </div>
       </aside>
       <div className="lg:pl-56">
         <header className="sticky top-0 z-30 border-b bg-white/95 backdrop-blur">
@@ -138,6 +141,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </nav>
         </header>
         <main className="mx-auto max-w-[1720px] px-4 py-4 lg:px-6">{children}</main>
+        <footer className="border-t px-4 py-3 text-[10px] font-medium uppercase tracking-wide text-muted-foreground lg:hidden">
+          ©2026 SUPREME AI VENTURES LLC
+        </footer>
       </div>
     </div>
   );

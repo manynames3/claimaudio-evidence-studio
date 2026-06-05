@@ -234,3 +234,5 @@ docs/                   Architecture, operations, security, and reviewer docs
 ## Important Privacy Note
 
 The committed audio and data are synthetic. Do not upload confidential claim files unless the deployment has signed auth, tenant scoping, Neon persistence, AWS encrypted storage, and customer-approved pilot controls configured.
+
+©2026 SUPREME AI VENTURES LLC
