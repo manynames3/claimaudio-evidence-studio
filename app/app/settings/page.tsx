@@ -1,12 +1,14 @@
 "use client";
 
-import { BellDot, Cloud, Database, KeyRound, LockKeyhole, ScrollText, Search, ShieldAlert, ShieldCheck, UserCog, Workflow } from "lucide-react";
+import { BellDot, Building2, Cloud, Database, KeyRound, LockKeyhole, ScrollText, Search, ShieldAlert, ShieldCheck, UserCog, Workflow } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AuditLogPanel } from "@/components/audit-log-panel";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
+import { getClientSession, type ClientSessionUser } from "@/lib/client/auth-api";
 import { useClaimAudioStore } from "@/lib/store/use-claim-audio-store";
+import type { UserRole } from "@/lib/types";
 
 const settings = [
   {
@@ -43,6 +45,7 @@ export default function SettingsPage() {
   const auditEvents = useClaimAudioStore((state) => state.auditEvents);
   const loadAuditEvents = useClaimAudioStore((state) => state.loadAuditEvents);
   const [backendStatus, setBackendStatus] = useState<BackendHealthResponse>();
+  const [sessionUser, setSessionUser] = useState<ClientSessionUser | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -69,6 +72,26 @@ export default function SettingsPage() {
     void loadAuditEvents();
   }, [loadAuditEvents]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    void getClientSession()
+      .then((session) => {
+        if (!cancelled) {
+          setSessionUser(session.user);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSessionUser(null);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <div className="space-y-6">
       <div>
@@ -82,6 +105,8 @@ export default function SettingsPage() {
       <BackendStatusPanel status={backendStatus} />
 
       <ConfidentialFileGate status={backendStatus} />
+
+      <AccessControlPanel status={backendStatus} user={sessionUser} />
 
       <div className="grid gap-4 xl:grid-cols-2">
         {settings.map((item) => {
@@ -183,6 +208,209 @@ interface BackendHealthResponse {
     missingNeonEnv: string[];
     missingAwsEnv: string[];
   };
+}
+
+const roleMatrix: Array<{
+  role: UserRole;
+  label: string;
+  permissions: Record<string, boolean>;
+}> = [
+  {
+    role: "adjuster",
+    label: "Adjuster",
+    permissions: {
+      "View claims": true,
+      "Review findings": true,
+      "Submit packet": true,
+      "Approve packet": false,
+      "Generate exports": true,
+      "Tenant admin": false
+    }
+  },
+  {
+    role: "supervisor",
+    label: "Supervisor",
+    permissions: {
+      "View claims": true,
+      "Review findings": true,
+      "Submit packet": true,
+      "Approve packet": true,
+      "Generate exports": true,
+      "Tenant admin": false
+    }
+  },
+  {
+    role: "siu",
+    label: "SIU",
+    permissions: {
+      "View claims": true,
+      "Review findings": true,
+      "Submit packet": true,
+      "Approve packet": false,
+      "Generate exports": true,
+      "Tenant admin": false
+    }
+  },
+  {
+    role: "defense_paralegal",
+    label: "Paralegal",
+    permissions: {
+      "View claims": true,
+      "Review findings": true,
+      "Submit packet": true,
+      "Approve packet": false,
+      "Generate exports": true,
+      "Tenant admin": false
+    }
+  },
+  {
+    role: "defense_attorney",
+    label: "Attorney",
+    permissions: {
+      "View claims": true,
+      "Review findings": true,
+      "Submit packet": true,
+      "Approve packet": true,
+      "Generate exports": true,
+      "Tenant admin": false
+    }
+  },
+  {
+    role: "admin",
+    label: "Admin",
+    permissions: {
+      "View claims": true,
+      "Review findings": true,
+      "Submit packet": true,
+      "Approve packet": true,
+      "Generate exports": true,
+      "Tenant admin": true
+    }
+  }
+];
+
+const permissionLabels = Object.keys(roleMatrix[0].permissions);
+
+function AccessControlPanel({
+  status,
+  user
+}: {
+  status?: BackendHealthResponse;
+  user: ClientSessionUser | null;
+}) {
+  const backend = status?.backend;
+  const auth = backend?.auth;
+  const authReady = Boolean(auth?.authProvider === "pilot-cookie" && auth.authConfigured);
+  const isAdmin = user?.role === "admin";
+
+  return (
+    <section className="rounded-lg border bg-white">
+      <div className="border-b p-5">
+        <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Building2 className="h-4 w-4 text-cyan-800" />
+              <h2 className="text-base font-semibold">Role and Tenant Admin Controls</h2>
+              <Badge variant={authReady ? "success" : "warning"}>
+                {authReady ? "Signed role session" : "Pilot auth defaults"}
+              </Badge>
+              <Badge variant={auth?.tenantIdConfigured ? "success" : "warning"}>
+                {auth?.tenantIdConfigured ? "Tenant scoped" : "Default tenant"}
+              </Badge>
+            </div>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+              Current deployment uses signed pilot sessions with tenant-scoped API access. Production should replace access-code role assignment with Cognito/Auth0 org membership, invite controls, and managed role claims.
+            </p>
+          </div>
+          <div className="grid min-w-[280px] gap-2 rounded-md border bg-slate-50 p-3 text-sm">
+            <SessionRow label="User" value={user?.displayName || "Loading"} />
+            <SessionRow label="Role" value={user?.role?.replace("_", " ") || "Loading"} />
+            <SessionRow label="Tenant ID" value={user?.tenantId || "Not loaded"} />
+            <SessionRow label="Auth provider" value={user?.authProvider || auth?.authProvider || "Checking"} />
+          </div>
+        </div>
+      </div>
+      <div className="grid gap-4 p-5 xl:grid-cols-[1fr_340px]">
+        <div className="claims-scrollbar overflow-x-auto rounded-md border">
+          <div className="min-w-[760px]">
+            <div className="grid grid-cols-[170px_repeat(6,minmax(96px,1fr))] border-b bg-slate-50 text-xs font-medium uppercase text-muted-foreground">
+              <div className="p-3">Role</div>
+              {permissionLabels.map((label) => (
+                <div key={label} className="p-3 text-center">
+                  {label}
+                </div>
+              ))}
+            </div>
+            {roleMatrix.map((row) => (
+              <div
+                key={row.role}
+                className="grid grid-cols-[170px_repeat(6,minmax(96px,1fr))] border-b last:border-b-0"
+              >
+                <div className="p-3 text-sm font-semibold text-slate-950">
+                  {row.label}
+                  {user?.role === row.role && (
+                    <Badge className="ml-2" variant="info">
+                      You
+                    </Badge>
+                  )}
+                </div>
+                {permissionLabels.map((label) => (
+                  <div key={label} className="flex items-center justify-center p-3">
+                    <Badge variant={row.permissions[label] ? "success" : "neutral"}>
+                      {row.permissions[label] ? "Allowed" : "No"}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="space-y-3">
+          <AdminState
+            label="User invitations"
+            ready={false}
+            detail="Placeholder. Requires Cognito/Auth0 tenant membership before external customers."
+          />
+          <AdminState
+            label="Role assignment"
+            ready={authReady}
+            detail={authReady ? "Pilot role claims are enforced by signed session and API role sets." : "Configure access codes or production identity provider."}
+          />
+          <AdminState
+            label="Tenant isolation"
+            ready={Boolean(auth?.tenantIdConfigured)}
+            detail={auth?.tenantIdConfigured ? "API queries use tenant-scoped repository access." : "Default demo tenant is active."}
+          />
+          <AdminState
+            label="Admin controls"
+            ready={isAdmin}
+            detail={isAdmin ? "Current user has admin role in this pilot session." : "Admin-only changes are visible but disabled for this role."}
+          />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function SessionRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="max-w-[180px] truncate text-right font-semibold text-slate-950">{value}</span>
+    </div>
+  );
+}
+
+function AdminState({ label, ready, detail }: { label: string; ready: boolean; detail: string }) {
+  return (
+    <div className="rounded-md border bg-slate-50 p-3">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-semibold text-slate-950">{label}</p>
+        <Badge variant={ready ? "success" : "warning"}>{ready ? "Active" : "Planned"}</Badge>
+      </div>
+      <p className="mt-2 text-xs leading-5 text-muted-foreground">{detail}</p>
+    </div>
+  );
 }
 
 function BackendStatusPanel({ status }: { status?: BackendHealthResponse }) {

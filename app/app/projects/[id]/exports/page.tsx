@@ -1,19 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { use, useEffect } from "react";
+import { use, useEffect, useState } from "react";
 import { ArrowLeft, CheckCircle2, FileArchive, FileText, ShieldCheck } from "lucide-react";
 import { ExportCard } from "@/components/export-card";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { backendApi } from "@/lib/client/backend-api";
+import { getClientSession, type ClientSessionUser } from "@/lib/client/auth-api";
 import { buildMockExport } from "@/lib/services";
 import { useClaimAudioStore } from "@/lib/store/use-claim-audio-store";
 import type { ExportMemo } from "@/lib/types";
 
 export default function ExportCenterPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const [sessionUser, setSessionUser] = useState<ClientSessionUser | null>(null);
   const {
     backendMode,
     projects,
@@ -30,6 +32,26 @@ export default function ExportCenterPage({ params }: { params: Promise<{ id: str
   useEffect(() => {
     void loadProjectBundle(id);
   }, [id, loadProjectBundle]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void getClientSession()
+      .then((session) => {
+        if (!cancelled) {
+          setSessionUser(session.user);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSessionUser(null);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   if (!project) {
     return (
@@ -71,7 +93,16 @@ export default function ExportCenterPage({ params }: { params: Promise<{ id: str
       contradictions:
         exportType === "contradictionReport" ? reviewedContradictions : projectContradictions,
       clips: projectClips,
-      exportType
+      exportType,
+      reviewer: sessionUser
+        ? {
+            displayName: sessionUser.displayName,
+            email: sessionUser.email,
+            role: sessionUser.role,
+            userId: sessionUser.userId,
+            tenantId: sessionUser.tenantId
+          }
+        : undefined
     })
   );
 

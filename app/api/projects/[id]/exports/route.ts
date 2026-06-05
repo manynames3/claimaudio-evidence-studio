@@ -77,14 +77,20 @@ export async function POST(request: NextRequest, context: RouteContext) {
       );
     }
 
-    // TODO: Production PDF/DOCX exports should include reviewer signature, tenant retention label, and S3/KMS object metadata.
     const generatedExport = await exportService.generateExport({
       project: bundle.project,
       findings: exportType === "supervisorReviewPacket" ? bundle.findings : reviewedFindings,
       transcriptSegments: bundle.transcriptSegments,
       contradictions: exportType === "supervisorReviewPacket" ? bundle.contradictions : reviewedContradictions,
       clips: bundle.clips,
-      exportType
+      exportType,
+      reviewer: {
+        displayName: authResult.auth.displayName,
+        email: authResult.auth.email,
+        role: authResult.auth.role,
+        userId: authResult.auth.userId,
+        tenantId: authResult.auth.tenantId
+      }
     });
     const storedExport = await storeExportArtifactIfConfigured(bundle.project.id, generatedExport);
     const generatedExportWithStorage = storedExport

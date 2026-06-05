@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import {
   AudioLines,
   LogOut,
+  FileCheck2,
   FileText,
   LayoutDashboard,
   ShieldCheck
@@ -30,6 +31,11 @@ const navItems = [
     href: "/app/projects/claim-7842/exports",
     label: "Exports",
     icon: FileText
+  },
+  {
+    href: "/app/supervisor",
+    label: "Supervisor Queue",
+    icon: FileCheck2
   },
   {
     href: "/app/settings",

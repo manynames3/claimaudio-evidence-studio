@@ -1,28 +1,93 @@
 # ClaimAudio Evidence Studio
 
-ClaimAudio Evidence Studio is a SaaS product demo for reviewing insurance recorded statements as timestamped claim evidence.
+ClaimAudio Evidence Studio is a production-style SaaS work sample for reviewing insurance recorded statements as timestamped claim evidence. The app turns a recorded statement into a transcript, claim-relevant evidence findings, contradiction candidates, evidence clips, supervisor review packets, and exportable claim-file work product. It is built as a realistic AWS/cloud/platform engineering sample, not as a generic transcription demo.
 
-## Stack
+**Positioning:** a claim evidence workbench for adjusters, TPAs, SIU, and insurance defense teams.
 
-- Next.js App Router
-- TypeScript
-- Tailwind CSS
-- shadcn/ui-style local components
-- Zustand local state
-- Preloaded Amazon Polly sample recorded statement audio with local mock transcript, evidence, contradiction, clip, and export data
-- Neon Postgres for paid-pilot persistence
-- AWS SDK server-only adapters for S3 signed uploads, Amazon Transcribe, Amazon Bedrock, SQS, Step Functions, and encrypted exports
-- Pilot access-code auth with signed HTTP-only sessions, code-assigned roles, role-aware UI, tenant-scoped API calls, and TODO hooks for Cognito/Auth0
+**Live demo:** <https://claimaudio-evidence-studio.hangi87.workers.dev>
 
-## Run Locally
+Screenshots are not committed yet. The live demo and local app show the current UI.
+
+## Problem
+
+Recorded statements often contain liability facts, injury details, prior-condition mentions, coverage facts, and inconsistencies, but long audio is slow to review and easy to misquote. Claim teams need exact quotes, timestamps, review decisions, and exportable memos.
+
+## Solution
+
+The app models a claim-review workflow around proof, not transcription alone:
+
+- Recorded statement upload or sample-statement processing.
+- Timestamped transcript with speaker labels.
+- AI evidence findings that must include exact quote, timestamp, category, confidence, and why-it-matters.
+- Human approve, reject, edit, clip, supervisor review, and export workflow.
+- Audit events for key review and export actions.
+
+## Operational Value
+
+The repository shows how I would structure a low-volume pilot for a cloud workflow product:
+
+- Cloudflare Workers deployment through OpenNext.
+- Neon Postgres persistence for tenant-scoped claim data.
+- AWS adapter scaffolding for S3, Transcribe, Bedrock, SQS, Step Functions, KMS, and export storage.
+- Guardrail validation around AI output before persistence/export.
+- Pilot auth, role gates, audit logging, deployment checks, and known limitations documented honestly.
+
+## Tech Stack
+
+- Next.js App Router, React, TypeScript
+- Tailwind CSS and local shadcn/ui-style components
+- Zustand for client-side UI cache
+- Neon Serverless Postgres and SQL migrations
+- Cloudflare Workers with OpenNext for deployment
+- AWS SDK adapters for S3, Transcribe, Bedrock, SQS, Step Functions, and KMS-backed exports
+- GitHub Actions for typecheck, AI guardrail validation, Cloudflare build, and deploy
+
+## Engineering Highlights
+
+- Backend-ready service boundaries in `lib/services` and `lib/services/aws`.
+- Tenant-scoped repository in `lib/db/claim-audio-repository.ts`.
+- Signed HTTP-only pilot sessions with role-aware API guards in `lib/server/auth.ts`.
+- AI prompt templates in `lib/ai/prompts` and validation in `lib/ai/validation.ts`.
+- Upload gating for real audio until Neon, AWS, auth, and tenant scope are configured.
+- Claim-file export generation with reviewer metadata and human-review disclaimers.
+- Supervisor review workflow and audit event persistence.
+- Cloudflare deployment workflow that checks deploy secrets before deploy.
+
+## Architecture Overview
+
+Start here:
+
+- [Architecture](docs/architecture.md)
+- [Reviewer guide](docs/reviewer-guide.md)
+- [Security model](docs/security.md)
+- [Runbook](docs/runbook.md)
+- [Deployment](docs/deployment.md)
+- [Testing](docs/testing.md)
+- [Tradeoffs](docs/tradeoffs.md)
+- [ADRs](docs/adrs/README.md)
+
+## Evidence Matrix
+
+| Area | Evidence |
+|---|---|
+| IaC | `wrangler.jsonc`, `open-next.config.ts`, SQL migrations in `db/migrations`. Terraform is not present. |
+| CI/CD | `.github/workflows/deploy-cloudflare.yml` runs install, typecheck, AI guardrails, Cloudflare build, and deploy. |
+| Security | Role-aware API guards, signed HTTP-only pilot sessions, tenant-scoped repository access, upload gating, S3/KMS adapter scaffolds. |
+| Reliability | Processing state model, retry hooks, Transcribe polling path, explicit failure states, supervisor return workflow. DLQ/alarm automation is planned, not complete. |
+| Observability | Cloudflare Worker observability enabled, app audit log events, processing/audit records in Neon. CloudWatch alarms are documented but not fully wired. |
+| Cost | Cloudflare Workers, Neon free-tier pilot path, signed S3 upload, bounded upload size, sample mode with no AWS usage. |
+| Operations | Runbook, deployment notes, teardown notes, known failure modes, pilot readiness gate in the UI. |
+| Testing | TypeScript check, AI guardrail validation, Cloudflare build. Unit/e2e coverage is limited and documented. |
+| Documentation | Architecture docs, reviewer guide, security, observability, cost model, testing, teardown, tradeoffs, and ADRs. |
+
+## Local Quickstart
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open [http://localhost:3000/app](http://localhost:3000/app). You will be redirected to `/login`.
-The demo login form starts an adjuster session using the server-configured pilot code; the code is not shown in the UI.
+Open <http://localhost:3000/app>. The app redirects to `/login`.
 
 Local default pilot access code:
 
@@ -30,272 +95,142 @@ Local default pilot access code:
 demo-pilot
 ```
 
-Set `CLAIMAUDIO_PILOT_ACCESS_CODE`, `CLAIMAUDIO_SUPERVISOR_ACCESS_CODE`, and `CLAIMAUDIO_SESSION_SECRET` before any external pilot. Users do not choose their own role; the server-side access code assigns it.
+For any external pilot, set real values for `CLAIMAUDIO_PILOT_ACCESS_CODE`, `CLAIMAUDIO_SUPERVISOR_ACCESS_CODE`, `CLAIMAUDIO_ADMIN_ACCESS_CODE`, and `CLAIMAUDIO_SESSION_SECRET`.
 
-## MVP Notes
+## Test and Validation Commands
 
-The sample-statement demo path uses a synthetic Amazon Polly recorded statement at `public/demo-audio/auto-bi-7842-recorded-statement.wav`. Transcript, evidence findings, contradictions, exports, and clips remain local mock data, but their timestamps are aligned to the generated audio through `lib/demo-audio/polly-demo-timings.json`. When AWS is configured, the uploaded-audio path is backend-connected for low-volume pilot use:
+```bash
+npm run typecheck
+npm run test:guardrails
+npm run test
+npm run build
+npm run cf:build
+git diff --check
+```
 
-- creates a persisted claim project in Neon
-- returns a signed S3 upload URL
-- stores uploaded audio in an SSE-KMS encrypted S3 bucket
-- starts an Amazon Transcribe batch job
-- normalizes Transcribe JSON into timestamped transcript segments
-- invokes Amazon Bedrock with strict quote/timestamp evidence prompts
-- persists only findings and contradiction pairs that pass validation and quote-support checks
-- generates claim-file-style HTML evidence memo and contradiction report exports from reviewed evidence
-- records export generation and export download as separate audit events
+`npm run test:guardrails` checks mock findings and contradictions for required quote, timestamp, category, confidence, why-it-matters, and forbidden conclusion language.
 
-If Neon or AWS is not configured, the UI disables real audio upload and keeps the sample statement available. The app no longer creates fake uploaded projects, which prevents users from trusting a workflow that cannot actually receive, store, or transcribe their audio.
+## Runtime Modes
 
-TODO comments still mark where full SQS/Step Functions orchestration, production retries, real audio clipping, Cognito/Auth0 JWT validation, and claim-system integrations should plug in.
+The app remains runnable with no environment variables.
+
+- **Sample mode:** uses committed synthetic Amazon Polly audio plus mock transcript, evidence, contradiction, clip, and export data.
+- **Neon-backed pilot mode:** persists claim projects, transcript segments, findings, clips, export memos, review actions, and audit events.
+- **AWS upload path:** when configured, creates signed S3 upload URLs, starts Transcribe, normalizes timestamped transcript segments, invokes Bedrock analysis, validates output, and persists only supported evidence.
 
 ## Neon + AWS Backend Path
 
-The app remains runnable with no environment variables. For a paid pilot, use Neon free tier for Postgres and AWS for encrypted storage, workflow, transcription, analysis, exports, and logs.
-
-1. Create a Neon project named `claimaudio-evidence-studio`.
+1. Create a Neon project.
 2. Copy `.env.example` to `.env.local`.
-3. Set `DATABASE_URL` to the Neon pooled connection string.
-4. Run all schema migrations:
+3. Set `DATABASE_URL`.
+4. Run migrations:
 
 ```bash
 npm run db:migrate
 ```
 
-5. Seed the current demo claim data into Neon:
+5. Seed demo data:
 
 ```bash
 npm run db:seed
 ```
 
-6. Start the app and check `/app/settings` or `/api/health` for backend readiness.
+6. Configure AWS and auth variables from `.env.example`.
+7. Start the app and check `/app/settings` or `/api/health`.
 
-```bash
-npm run dev
-```
+## Deployment Overview
 
-## Polly Demo Audio
-
-The flagship sample claim uses a two-speaker Amazon Polly conversation:
-
-- Adjuster voice: Matthew
-- Claimant voice: Joanna
-- Scenario: auto BI recorded statement with lane-change uncertainty, work-errand coverage facts, delayed treatment, prior lower-back condition, missing witness contact info, and contradiction-ready speed/lane/pain chronology.
-
-Regenerate the demo audio and timing JSON with:
-
-```bash
-npm run demo:polly
-```
-
-This command calls AWS Polly using your local AWS credentials, stitches raw PCM responses into a browser-playable WAV, and writes the timing file used by the transcript and evidence markers. The generated file is synthetic and non-confidential; do not use real claim facts in this script.
-
-The Neon schema lives in `db/migrations` and includes:
-
-- tenant and user placeholders
-- claim projects
-- audio assets
-- processing jobs
-- transcript segments
-- evidence findings
-- contradictions
-- evidence clips
-- export memos
-- user review actions
-- audit log events
-
-The server repository lives in `lib/db/claim-audio-repository.ts`. API routes are available for backend migration work:
-
-- `GET /api/health`
-- `GET /api/projects`
-- `POST /api/projects`
-- `GET /api/projects/[id]`
-- `POST /api/projects/[id]/processing`
-- `POST /api/projects/[id]/review-actions`
-- `POST /api/projects/[id]/clips`
-- `POST /api/projects/[id]/exports`
-- `POST /api/projects/[id]/exports/download`
-- `POST /api/projects/[id]/supervisor-review`
-- `GET /api/audit-events`
-
-Protected app routes and API routes require a signed pilot session unless `CLAIMAUDIO_REQUIRE_AUTH=false`. Mutation routes require `DATABASE_URL`. Read-only routes fall back to mock data when Neon is not configured.
-
-Pilot roles are assigned by access code:
-
-- `CLAIMAUDIO_PILOT_ACCESS_CODE` creates an adjuster session.
-- `CLAIMAUDIO_SUPERVISOR_ACCESS_CODE` creates a supervisor session.
-- `CLAIMAUDIO_ADMIN_ACCESS_CODE` creates an admin session for controlled internal use.
-
-The frontend is backend-aware:
-
-- Dashboard hydrates from `GET /api/projects`.
-- Project overview, workspace, and export center hydrate from `GET /api/projects/[id]`.
-- New project creation uses `POST /api/projects` when Neon is configured, then starts `POST /api/projects/[id]/processing`.
-- Finding approvals/rejections/edits and contradiction approvals/rejections use `POST /api/projects/[id]/review-actions`.
-- Clip creation uses `POST /api/projects/[id]/clips`.
-- Export generation uses `POST /api/projects/[id]/exports`.
-- Export downloads are audited through `POST /api/projects/[id]/exports/download`.
-- Supervisor submit/approve/return uses `POST /api/projects/[id]/supervisor-review`.
-- Zustand remains the UI cache and falls back to local mock behavior when Neon is absent.
-
-## Low-Volume Pilot Runbook
-
-For a small paid pilot, use this operating model:
-
-1. Create the Neon free-tier project.
-2. Set `DATABASE_URL` in `.env.local`.
-3. Run `npm run db:migrate`.
-4. Run `npm run db:seed`.
-5. Provision the AWS resources documented below or reuse the current pilot resources.
-6. Configure Worker/local environment variables from `.env.example`.
-7. Confirm `/api/health` shows `neonConfigured: true` and `awsConfigured: true`.
-8. Confirm `/api/health` shows `auth.authConfigured: true` before an external pilot.
-9. Create a project with either the sample statement or a controlled test audio file.
-10. For uploaded audio, confirm the processing flow reaches `readyForReview` after Transcribe and optional Bedrock extraction.
-11. Verify approvals, edits, clips, supervisor review, exports, and audit events survive refresh.
-
-This is enough for low-volume workflow pilots with controlled, non-confidential or customer-approved pilot files. It is not yet enough for broad confidential claim-file rollout until Cognito/Auth0, customer tenant provisioning, retention/legal hold enforcement, and production processing orchestration are complete.
-
-## Cloudflare Deployment
-
-The app is configured for Cloudflare Workers through OpenNext for Cloudflare.
+The app deploys to Cloudflare Workers through OpenNext.
 
 Key files:
 
 - `open-next.config.ts`
 - `wrangler.jsonc`
+- `.github/workflows/deploy-cloudflare.yml`
 
-Deployment commands:
+Commands:
 
 ```bash
 npm run cf:build
 npm run cf:deploy
 ```
 
-GitHub-based deployment is configured in `.github/workflows/deploy-cloudflare.yml`.
-Pushes to `main` run:
+GitHub Actions deploys from `main` when `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` repository secrets are configured. The workflow uses `wrangler deploy --keep-vars` so application secrets stay in Cloudflare and are not committed.
 
-1. `npm ci`
-2. `npm run typecheck`
-3. `npm run test:guardrails`
-4. `npm run cf:build`
-5. `npx wrangler deploy --keep-vars`
+More detail: [Deployment](docs/deployment.md).
 
-Add these GitHub repository secrets before relying on automatic deploys:
+## Security Model Summary
 
-- `CLOUDFLARE_ACCOUNT_ID`
-- `CLOUDFLARE_API_TOKEN`
+- Pilot auth uses access codes to create signed HTTP-only sessions.
+- API routes enforce role sets for mutation, export, and supervisor actions.
+- Repository access is tenant-scoped by session tenant ID.
+- Real upload is disabled unless Neon, AWS, auth, and tenant scope are configured.
+- AWS adapters assume encrypted S3/KMS storage for uploaded audio and generated exports.
 
-The workflow uses `--keep-vars` so existing Cloudflare Worker secrets such as `DATABASE_URL`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `CLAIMAUDIO_PILOT_ACCESS_CODE`, `CLAIMAUDIO_SUPERVISOR_ACCESS_CODE`, and `CLAIMAUDIO_SESSION_SECRET` remain in Cloudflare and are not committed to GitHub.
+This is not yet a full enterprise auth model. Cognito/Auth0, customer tenant provisioning, database-level tenant isolation, retention/legal hold enforcement, and complete IAM policy automation are documented next steps.
 
-The deployed Worker uses:
+More detail: [Security](docs/security.md).
 
-- Cloudflare Workers for the Next.js frontend, SSR pages, and API routes.
-- Neon Postgres for persisted project/evidence/audit data.
-- Cloudflare Worker secret `DATABASE_URL` for the Neon connection string.
-- Cloudflare Worker secrets for `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`.
-- Cloudflare Worker secrets for `CLAIMAUDIO_PILOT_ACCESS_CODE` and `CLAIMAUDIO_SESSION_SECRET`.
-- Worker vars for `CLAIMAUDIO_BACKEND_MODE`, `CLAIMAUDIO_TENANT_ID`, `AWS_REGION`, S3 buckets, KMS key ARN, SQS queue URL, Step Functions ARN, and Bedrock model ID.
+## Observability Model Summary
 
-Current deployment URL:
+- Cloudflare Worker observability is enabled in `wrangler.jsonc`.
+- App-level audit events track project creation, upload, transcription, analysis, review decisions, clips, exports, downloads, and supervisor review actions.
+- Processing status is visible in the UI.
+- CloudWatch alarms, DLQs, tracing, and dashboards are planned for the AWS async path.
+
+More detail: [Observability](docs/observability.md).
+
+## Cost Controls Summary
+
+- Sample mode runs without AWS usage.
+- Low-volume pilot design uses Cloudflare Workers and Neon free-tier Postgres.
+- Signed upload URLs expire after 15 minutes.
+- Audio uploads are capped at 100 MB.
+- Export signed download URLs expire after 15 minutes.
+- Teardown docs cover Cloudflare, Neon, and AWS cleanup.
+
+More detail: [Cost model](docs/cost-model.md) and [Teardown](docs/teardown.md).
+
+## Project Structure
 
 ```text
-https://claimaudio-evidence-studio.hangi87.workers.dev
+app/                    Next.js App Router pages and API routes
+components/             UI components and workflow panels
+db/migrations/          Neon Postgres schema migrations
+lib/ai/                 Prompt templates and AI output validation
+lib/client/             Browser API clients
+lib/db/                 Neon repository and database access
+lib/demo-audio/         Polly sample timing data and helpers
+lib/mock-data/          Sample claim, transcript, evidence, and memo data
+lib/server/             Auth, env, and API guard helpers
+lib/services/           Service interfaces and mock implementations
+lib/services/aws/       AWS service adapter scaffolds
+public/demo-audio/      Synthetic Polly WAV used by the demo
+scripts/                Migration, seed, guardrail, and Polly generation scripts
+docs/                   Architecture, operations, security, and reviewer docs
 ```
 
-Useful checks:
+## Known Limitations
 
-```bash
-curl https://claimaudio-evidence-studio.hangi87.workers.dev/api/health
-```
+- Current auth is pilot access-code based, not Cognito/Auth0.
+- Database-level row-level security is not implemented.
+- Real upload depends on configured AWS and browser file-upload support.
+- SQS and Step Functions adapters exist, but the current processing route still uses a direct server-triggered path.
+- CloudWatch alarms, DLQ dashboards, and full tracing are documented but not fully implemented.
+- Exports are HTML/text work-product artifacts, not final binary PDF/DOCX packets.
+- Evidence clips are metadata/transcript clips; real clipped audio artifacts are still planned.
+- No claim system, document management, email, or file-note integration exists yet.
 
-If `DATABASE_URL` changes, update the Cloudflare secret:
+## What I Would Improve Next
 
-```bash
-printf '%s' "$DATABASE_URL" | npx wrangler secret put DATABASE_URL
-```
+1. Replace pilot access codes with Cognito/Auth0 JWT validation and tenant membership management.
+2. Add database-level tenant isolation and retention/legal hold controls.
+3. Move uploaded-audio processing fully behind SQS, Step Functions, retries, and DLQs.
+4. Add CloudWatch alarms, structured logs, traces, and operational dashboards.
+5. Generate final PDF/DOCX export packets with immutable audit IDs and signed S3 storage.
+6. Add Playwright e2e smoke tests for upload, review, supervisor, and export flows.
+7. Add Terraform or another IaC layer for AWS resources if this becomes a deployable production stack.
 
-If AWS Worker credentials are rotated:
+## Important Privacy Note
 
-```bash
-printf '%s' "$AWS_ACCESS_KEY_ID" | npx wrangler secret put AWS_ACCESS_KEY_ID
-printf '%s' "$AWS_SECRET_ACCESS_KEY" | npx wrangler secret put AWS_SECRET_ACCESS_KEY
-```
-
-If pilot auth secrets are rotated:
-
-```bash
-printf '%s' "$CLAIMAUDIO_PILOT_ACCESS_CODE" | npx wrangler secret put CLAIMAUDIO_PILOT_ACCESS_CODE
-printf '%s' "$CLAIMAUDIO_SUPERVISOR_ACCESS_CODE" | npx wrangler secret put CLAIMAUDIO_SUPERVISOR_ACCESS_CODE
-printf '%s' "$CLAIMAUDIO_SESSION_SECRET" | npx wrangler secret put CLAIMAUDIO_SESSION_SECRET
-```
-
-## Backend-Ready Mock Services
-
-Service abstractions live in `lib/services`:
-
-- `storage-service.ts`
-- `transcription-service.ts`
-- `analysis-service.ts`
-- `export-service.ts`
-- `clip-service.ts`
-- `audit-log-service.ts`
-
-The sample-statement project flow simulates upload, transcription, analysis, and ready-for-review states locally. The preloaded sample recording is committed under `public/demo-audio`, so no AWS keys or environment variables are required to run the app after the audio has been generated.
-
-Server-only AWS production adapter scaffolds live in `lib/services/aws`:
-
-- `aws-storage-service.ts`: S3 signed upload URLs. Bucket defaults enforce SSE-KMS encryption for browser uploads.
-- `aws-workflow-service.ts`: SQS message plus Step Functions execution start.
-- `aws-transcription-service.ts`: Amazon Transcribe job start with speaker labels.
-- `aws-analysis-service.ts`: Bedrock invocation using the production prompt templates, Cloudflare-compatible fetch handler, and finding validation.
-- `aws-export-service.ts`: encrypted S3 export artifact storage and signed downloads.
-
-Required AWS environment variables are documented in `.env.example`. Credentials are intentionally not required for local demo mode.
-
-## AI Prompt Templates
-
-Production-ready prompt templates live in `lib/ai/prompts`:
-
-- `evidenceExtractionPrompt.ts`
-- `contradictionDetectionPrompt.ts`
-- `claimMemoPrompt.ts`
-- `followUpQuestionsPrompt.ts`
-- `supervisorReviewPrompt.ts`
-
-These templates are designed for Amazon Bedrock or an OpenAI-compatible analysis service. The current uploaded-audio path uses Bedrock model ID `us.anthropic.claude-sonnet-4-5-20250929-v1:0`. The production path should:
-
-1. Store encrypted audio in S3 using KMS.
-2. Generate transcript segments with Amazon Transcribe or Transcribe Call Analytics.
-3. Send transcript segments and claim context to Bedrock using the prompt builders.
-4. Validate model JSON with `lib/ai/validation.ts`.
-5. Reject findings that lack exact quote, timestamp, category, confidence, transcript segment link, or `whyItMatters`.
-6. Reject any output using forbidden conclusion language such as “fraudulent claim” or “claimant is lying.”
-7. Persist validated findings, contradictions, memos, and audit events in Neon Postgres.
-
-The sample-statement mock analysis service imports the prompt builders and validation utilities but does not call a real model. Uploaded audio uses `AwsAnalysisService` after Transcribe completes.
-
-## Paid Pilot Next Steps
-
-Before real claim files are uploaded:
-
-1. Replace pilot access-code auth with Cognito/Auth0 JWT validation and customer tenant provisioning.
-2. Add RLS or equivalent database-level tenant isolation in addition to API tenant checks.
-3. Replace synchronous processing polling with SQS and Step Functions.
-4. Add processing-job tables, retries, dead-letter queues, and admin retry tooling.
-5. Add real evidence clip generation with stored clipped audio artifacts.
-6. Harden exports into claim-file-ready PDF/DOCX/HTML packets.
-7. Extend human-review gates to contradiction review, supervisor signatures, and final export/download audit events.
-8. Add CloudWatch alarms, dead-letter queues, and processing-job retry dashboards.
-9. Add retention/legal hold controls before production customer data.
-
-## Verification
-
-```bash
-npm run typecheck
-npm run test:guardrails
-npm run build
-```
-
-`npm run test:guardrails` validates that mock findings and contradictions include exact quotes, timestamps, supported categories, confidence scores, and no forbidden conclusion language.
+The committed audio and data are synthetic. Do not upload confidential claim files unless the deployment has signed auth, tenant scoping, Neon persistence, AWS encrypted storage, and customer-approved pilot controls configured.

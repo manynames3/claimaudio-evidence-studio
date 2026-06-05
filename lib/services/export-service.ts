@@ -16,10 +16,19 @@ export interface GenerateExportInput {
   contradictions: Contradiction[];
   clips: EvidenceClip[];
   exportType: ExportMemo["exportType"];
+  reviewer?: ExportReviewer;
 }
 
 export interface ExportService {
   generateExport(input: GenerateExportInput): Promise<GeneratedExport>;
+}
+
+export interface ExportReviewer {
+  displayName: string;
+  email: string;
+  role: string;
+  userId?: string;
+  tenantId?: string;
 }
 
 export function buildMockExport(input: GenerateExportInput): GeneratedExport {
@@ -32,7 +41,7 @@ export function buildMockExport(input: GenerateExportInput): GeneratedExport {
       description: "Concise claim-facing summary of the recorded statement and primary evidence themes.",
       format: "HTML",
       fileName: `${project.claimNumber}_statement_summary.html`,
-      content: buildStatementSummary(project, input.findings)
+      content: buildStatementSummary(input)
     };
   }
 
@@ -43,7 +52,7 @@ export function buildMockExport(input: GenerateExportInput): GeneratedExport {
       description: "Approved evidence items grouped by category with exact quote, timestamp, and reviewer notes.",
       format: "HTML",
       fileName: `${project.claimNumber}_timestamped_evidence_memo.html`,
-      content: buildEvidenceMemo(project, input.findings)
+      content: buildEvidenceMemo(input)
     };
   }
 
@@ -54,7 +63,7 @@ export function buildMockExport(input: GenerateExportInput): GeneratedExport {
       description: "Quote-paired contradiction review for SIU, credibility, and liability analysis.",
       format: "HTML",
       fileName: `${project.claimNumber}_contradiction_report.html`,
-      content: buildContradictionHtml(project, input.contradictions)
+      content: buildContradictionHtml(input)
     };
   }
 
@@ -65,7 +74,7 @@ export function buildMockExport(input: GenerateExportInput): GeneratedExport {
       description: "Full timestamped transcript with speaker labels and confidence references.",
       format: "Text",
       fileName: `${project.claimNumber}_transcript.txt`,
-      content: buildTranscript(project, input.transcriptSegments)
+      content: buildTranscript(input)
     };
   }
 
@@ -75,7 +84,7 @@ export function buildMockExport(input: GenerateExportInput): GeneratedExport {
     description: "Claim-file review packet with evidence status, pending issues, contradictions, and saved clips.",
     format: "HTML",
     fileName: `${project.claimNumber}_supervisor_review_packet.html`,
-    content: buildSupervisorPacket(project, input.findings, input.contradictions, input.clips)
+    content: buildSupervisorPacket(input)
   };
 }
 
@@ -89,12 +98,14 @@ export const mockExportService: ExportService = {
 
 export const exportService = mockExportService;
 
-function buildStatementSummary(project: ClaimProject, findings: EvidenceFinding[]) {
+function buildStatementSummary(input: GenerateExportInput) {
+  const { project, findings } = input;
   const approved = findings.filter((finding) => finding.reviewStatus === "approved" || finding.reviewStatus === "edited");
   const pendingHigh = findings.filter((finding) => finding.reviewStatus === "pending" && finding.severity === "high");
 
   return buildClaimFileHtml({
     project,
+    reviewer: input.reviewer,
     title: "Statement Summary",
     subtitle: "Neutral recorded-statement summary prepared from reviewer-approved evidence.",
     metadata: [
@@ -134,11 +145,13 @@ function buildStatementSummary(project: ClaimProject, findings: EvidenceFinding[
   });
 }
 
-function buildEvidenceMemo(project: ClaimProject, findings: EvidenceFinding[]) {
+function buildEvidenceMemo(input: GenerateExportInput) {
+  const { project, findings } = input;
   const includedFindings = findings.filter((finding) => finding.reviewStatus === "approved" || finding.reviewStatus === "edited");
 
   return buildClaimFileHtml({
     project,
+    reviewer: input.reviewer,
     title: "Timestamped Evidence Memo",
     subtitle: "Reviewer-approved evidence with exact quote and timestamp support.",
     metadata: [
@@ -212,13 +225,15 @@ function buildEvidenceMemo(project: ClaimProject, findings: EvidenceFinding[]) {
 
 function buildClaimFileHtml(input: {
   project: ClaimProject;
+  reviewer?: ExportReviewer;
   title: string;
   subtitle: string;
   metadata?: Array<{ label: string; value: string }>;
   body: string;
 }) {
-  const { project, title, subtitle, body, metadata = [] } = input;
+  const { project, reviewer, title, subtitle, body, metadata = [] } = input;
   const preparedAt = new Date().toISOString();
+  const reviewerMetadata = getReviewerMetadata(reviewer, preparedAt);
 
   return `<!doctype html>
 <html>
@@ -237,6 +252,9 @@ function buildClaimFileHtml(input: {
     .document-label { color: #155e75; font-size: 12px; font-weight: 700; letter-spacing: .04em; margin-bottom: 6px; text-transform: uppercase; }
     .claim-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }
     .claim-grid div { border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; background: #f8fafc; }
+    .signature-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .signature-line { border-bottom: 1px solid #64748b; min-height: 34px; padding-top: 12px; font-weight: 700; }
+    .fine-print { color: #64748b; font-size: 12px; line-height: 1.55; }
     .label { display: block; color: #64748b; font-size: 11px; text-transform: uppercase; margin-bottom: 4px; }
     .evidence-row { border-top: 1px solid #e2e8f0; padding: 14px 0; }
     .evidence-row:first-child { border-top: 0; }
@@ -262,6 +280,10 @@ function buildClaimFileHtml(input: {
         <div><span class="label">Loss date</span>${escapeHtml(project.lossDate)}</div>
         <div><span class="label">Claim type</span>${escapeHtml(project.claimType)}</div>
         <div><span class="label">Prepared</span>${escapeHtml(preparedAt)}</div>
+        <div><span class="label">Reviewed by</span>${escapeHtml(reviewerMetadata.displayName)}</div>
+        <div><span class="label">Reviewer role</span>${escapeHtml(reviewerMetadata.role)}</div>
+        <div><span class="label">Reviewer email</span>${escapeHtml(reviewerMetadata.email)}</div>
+        <div><span class="label">Tenant scope</span>${escapeHtml(reviewerMetadata.tenantId)}</div>
         ${metadata
           .map((item) => `<div><span class="label">${escapeHtml(item.label)}</span>${escapeHtml(item.value)}</div>`)
           .join("")}
@@ -269,9 +291,43 @@ function buildClaimFileHtml(input: {
       <p class="review-note">AI-assisted work product. Human review is required before claim-file reliance. No coverage, liability, or claim disposition conclusion is made by this export.</p>
     </header>
     ${body}
+    <section>
+      <h2>Reviewer Attestation and Signature Metadata</h2>
+      <p class="fine-print">This export is prepared as AI-assisted claim-review work product. The reviewer attests that exported findings marked approved or edited were checked against the cited quote and timestamp before use. This document does not decide coverage, liability, damages, or claim disposition.</p>
+      <div class="signature-grid">
+        <div>
+          <span class="label">Electronic reviewer signature</span>
+          <div class="signature-line">${escapeHtml(reviewerMetadata.displayName)}</div>
+        </div>
+        <div>
+          <span class="label">Signed date</span>
+          <div class="signature-line">${escapeHtml(reviewerMetadata.signedAt)}</div>
+        </div>
+        <div>
+          <span class="label">Reviewer user ID</span>
+          <div class="signature-line">${escapeHtml(reviewerMetadata.userId)}</div>
+        </div>
+        <div>
+          <span class="label">Review system</span>
+          <div class="signature-line">ClaimAudio Evidence Studio</div>
+        </div>
+      </div>
+      <p class="fine-print">TODO: Production PDF/DOCX generation should attach immutable audit-event IDs, S3/KMS object metadata, customer retention label, and Cognito/Auth0-verified identity claims.</p>
+    </section>
   </main>
 </body>
 </html>`;
+}
+
+function getReviewerMetadata(reviewer: ExportReviewer | undefined, signedAt: string) {
+  return {
+    displayName: reviewer?.displayName || "Pilot Reviewer",
+    email: reviewer?.email || "pilot-reviewer@claimaudio.local",
+    role: reviewer?.role ? reviewer.role.replace("_", " ") : "pilot reviewer",
+    userId: reviewer?.userId || "local-demo-user",
+    tenantId: reviewer?.tenantId || "local-demo-tenant",
+    signedAt
+  };
 }
 
 function escapeHtml(value: unknown) {
@@ -283,9 +339,12 @@ function escapeHtml(value: unknown) {
     .replace(/'/g, "&#039;");
 }
 
-function buildContradictionHtml(project: ClaimProject, contradictions: Contradiction[]) {
+function buildContradictionHtml(input: GenerateExportInput) {
+  const { project, contradictions } = input;
+
   return buildClaimFileHtml({
     project,
+    reviewer: input.reviewer,
     title: "Contradiction Report",
     subtitle:
       "Quote-paired potential inconsistencies for human review. No fraud, liability, coverage, or disposition conclusion is made.",
@@ -319,23 +378,29 @@ function buildContradictionHtml(project: ClaimProject, contradictions: Contradic
   });
 }
 
-function buildTranscript(project: ClaimProject, segments: TranscriptSegment[]) {
+function buildTranscript(input: GenerateExportInput) {
+  const { project, transcriptSegments } = input;
+  const preparedAt = new Date().toISOString();
+  const reviewerMetadata = getReviewerMetadata(input.reviewer, preparedAt);
+
   return [
     `Transcript - ${project.claimNumber}`,
+    `Prepared: ${preparedAt}`,
+    `Reviewed by: ${reviewerMetadata.displayName} (${reviewerMetadata.role})`,
+    `Reviewer email: ${reviewerMetadata.email}`,
+    `Tenant scope: ${reviewerMetadata.tenantId}`,
+    `Signature metadata: ${reviewerMetadata.userId} at ${reviewerMetadata.signedAt}`,
+    "Use condition: Human review required before claim-file reliance. This transcript does not decide coverage, liability, damages, or claim disposition.",
     "",
-    ...segments.map(
+    ...transcriptSegments.map(
       (segment) =>
         `[${formatTimeRange(segment.startTimeSeconds, segment.endTimeSeconds)}] ${segment.speaker}: ${segment.text}`
     )
   ].join("\n");
 }
 
-function buildSupervisorPacket(
-  project: ClaimProject,
-  findings: EvidenceFinding[],
-  contradictions: Contradiction[],
-  clips: EvidenceClip[]
-) {
+function buildSupervisorPacket(input: GenerateExportInput) {
+  const { project, findings, contradictions, clips } = input;
   const reviewedFindings = findings.filter(
     (finding) => finding.reviewStatus === "approved" || finding.reviewStatus === "edited"
   );
@@ -348,6 +413,7 @@ function buildSupervisorPacket(
 
   return buildClaimFileHtml({
     project,
+    reviewer: input.reviewer,
     title: "Supervisor Review Packet",
     subtitle: "Human-review packet for approved evidence, open high-priority items, contradictions, and saved clips.",
     metadata: [

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { use, useEffect } from "react";
 import { AlertTriangle, FileText, ShieldCheck } from "lucide-react";
+import { AiAccuracyValidationView } from "@/components/ai-accuracy-validation-view";
 import { AnalysisValidationPanel } from "@/components/analysis-validation-panel";
 import { ContradictionCard } from "@/components/contradiction-card";
 import { DemoBanner } from "@/components/demo-banner";
@@ -161,6 +162,16 @@ export default function EvidenceWorkspacePage({ params }: { params: Promise<{ id
         transcriptSegments={projectSegments}
         findings={projectFindings}
         contradictions={projectContradictions}
+      />
+
+      <AiAccuracyValidationView
+        projectId={project.id}
+        findings={projectFindings}
+        transcriptSegments={projectSegments}
+        selectedFindingId={selectedFindingId}
+        onSelectFinding={selectFinding}
+        onJump={setCurrentTime}
+        onStatusChange={updateFindingStatus}
       />
 
       <section className="rounded-lg border bg-white p-4">
